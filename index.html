@@ -1,0 +1,2703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1a1a">
+<title>Trap Journal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+:root {
+  --bg:#ffffff; --bg2:#f5f5f4; --bg3:#ededeb; --bg4:#e5e4e2;
+  --text:#1a1a1a; --text2:#6b6b6b; --text3:#a8a8a0;
+  --border:rgba(0,0,0,0.10); --border2:rgba(0,0,0,0.20);
+  --blue:#378ADD; --blue-bg:#E6F1FB; --blue-text:#0C447C;
+  --green:#1D9E75; --green-bg:#E1F5EE; --green-text:#085041;
+  --amber:#BA7517; --amber-bg:#FAEEDA; --amber-text:#633806;
+  --red:#E24B4A; --red-bg:#FCEBEB;
+  --hit:#22c55e; --miss:#ef4444;
+  --r:10px; --rlg:14px;
+  --nav-h:64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#141414; --bg2:#1f1f1d; --bg3:#282826; --bg4:#323230;
+    --text:#f0f0ee; --text2:#909088; --text3:#555550;
+    --border:rgba(255,255,255,0.09); --border2:rgba(255,255,255,0.18);
+    --blue-bg:#0c2a4a; --blue-text:#85B7EB;
+    --green-bg:#04342c; --green-text:#9FE1CB;
+    --amber-bg:#2a1e07; --amber-text:#FAC775;
+    --red-bg:#2a0c0c; --red:#F09595;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);display:flex;flex-direction:column}
+
+/* ── LAYOUT ── */
+#app{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.view{display:none;flex:1;overflow-y:auto;flex-direction:column}
+.view.active{display:flex}
+.scroll-area{flex:1;overflow-y:auto;padding:1rem;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 1rem)}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{height:calc(var(--nav-h) + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:var(--bg);border-top:1px solid var(--border);display:flex;flex-shrink:0;z-index:10}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:var(--text3);font-size:10px;font-family:inherit;cursor:pointer;padding:8px 4px;transition:color .15s}
+.nav-btn i{font-size:22px}
+.nav-btn.active{color:var(--blue)}
+.nav-btn .nav-label{font-size:10px;font-weight:500}
+
+/* ── CARDS & COMMON ── */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--rlg);padding:1rem;margin-bottom:.75rem}
+.card-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.75rem}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:.75rem}
+.stat-card{background:var(--bg2);border-radius:var(--r);padding:.7rem .9rem}
+.stat-card .sv{font-size:24px;font-weight:700;margin-top:2px}
+.stat-card .sl{font-size:11px;color:var(--text2);font-weight:500}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600}
+.bs{background:var(--blue-bg);color:var(--blue-text)}
+.bh{background:var(--amber-bg);color:var(--amber-text)}
+.bd{background:var(--green-bg);color:var(--green-text)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:var(--r);font-family:inherit;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--blue);color:#fff;padding:13px 20px;font-size:15px;width:100%}
+.btn-secondary{background:var(--bg2);color:var(--text);border:1px solid var(--border2);padding:11px 16px;font-size:14px}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red);padding:8px 12px;font-size:13px}
+.btn-sm{padding:7px 12px;font-size:13px}
+.btn-icon{width:38px;height:38px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-size:18px;flex-shrink:0}
+
+/* ── FORMS ── */
+.fi{display:flex;flex-direction:column;gap:5px;margin-bottom:.75rem}
+.fi label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.03em}
+input,select{background:var(--bg2);color:var(--text);border:1px solid var(--border2);border-radius:var(--r);padding:12px 14px;font-size:15px;font-family:inherit;width:100%;outline:none;-webkit-appearance:none}
+input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,138,221,.18)}
+.seg{display:grid;gap:6px;border-radius:var(--r);background:var(--bg2);padding:4px}
+.seg button{border:none;border-radius:8px;padding:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;background:transparent;color:var(--text2);transition:all .15s}
+.seg button.active{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+
+/* ── TABLES ── */
+.tbl{width:100%;font-size:13px;border-collapse:collapse}
+.tbl th{text-align:left;padding:7px 8px;font-size:11px;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.03em}
+.tbl td{padding:8px 8px;border-bottom:1px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbl tr:last-child td{border-bottom:none}
+
+/* ── EMPTY / UTILITY ── */
+.empty{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:14px}
+.row{display:flex;align-items:center;gap:8px}
+.row-between{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.avatar{border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--blue-text);flex-shrink:0}
+.divider{height:1px;background:var(--border);margin:.5rem 0}
+.section-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:.75rem 0 .4rem}
+.toast{position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 12px);left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 20px;border-radius:999px;font-size:13px;font-weight:600;z-index:999;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal-sheet{background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;padding:1.25rem 1rem calc(1.25rem + var(--safe-bottom))}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto .75rem}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:1rem;text-align:center}
+
+/* ── BACK BUTTON ── */
+.back-bar{display:flex;align-items:center;gap:8px;padding:.75rem 1rem;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.back-bar button{background:none;border:none;color:var(--blue);font-size:15px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:4px;font-weight:500}
+.back-bar .back-title{font-weight:600;font-size:16px;flex:1;text-align:center}
+
+/* ═══════════════════════════════════════════════════
+   SCORER MODE
+═══════════════════════════════════════════════════ */
+#scorer-setup, #scorer-live, #scorer-done{display:flex;flex-direction:column;flex:1}
+.shooter-slot{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:.75rem;margin-bottom:.5rem;display:flex;align-items:center;gap:10px}
+.shooter-slot .slot-num{width:28px;height:28px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text2);flex-shrink:0}
+.shooter-slot select{flex:1;margin:0;padding:9px 12px;font-size:14px}
+
+/* Live scorer */
+.live-header{padding:.75rem 1rem;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.station-indicators{display:flex;gap:6px;justify-content:center;padding:.6rem 1rem;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.stn-dot{width:32px;height:6px;border-radius:3px;background:var(--bg3)}
+.stn-dot.done{background:var(--green)}
+.stn-dot.active{background:var(--blue)}
+
+.shooter-scorecard{background:var(--bg);border-bottom:1px solid var(--border);padding:.75rem 1rem}
+.scorecard-name{font-weight:700;font-size:15px;margin-bottom:.5rem}
+.shot-row{display:flex;gap:6px;margin-bottom:.25rem;flex-wrap:wrap}
+.shot-btn{width:44px;height:44px;border-radius:10px;border:2px solid var(--border2);background:var(--bg2);font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--text2)}
+.shot-btn.hit{background:var(--hit);border-color:var(--hit);color:#fff}
+.shot-btn.miss{background:var(--miss);border-color:var(--miss);color:#fff}
+.shot-btn.miss{background:var(--bg2);border-color:var(--border2);color:var(--text3)}
+.shot-btn:active{transform:scale(.9)}
+.total-pill{background:var(--bg2);border-radius:999px;padding:3px 12px;font-size:13px;font-weight:700;display:inline-block}
+
+.station-nav{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;background:var(--bg);border-top:1px solid var(--border);flex-shrink:0}
+.station-nav .stn-label{font-size:16px;font-weight:700}
+
+/* ═══════════════════════════════════════════════════
+   FIELD MODE
+═══════════════════════════════════════════════════ */
+#field-setup, #field-live{display:flex;flex-direction:column;flex:1}
+.start-station-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:.5rem 0}
+.stn-pick{height:56px;border-radius:12px;border:2px solid var(--border2);background:var(--bg2);font-size:18px;font-weight:700;cursor:pointer;color:var(--text);transition:all .15s;display:flex;align-items:center;justify-content:center}
+.stn-pick.selected{background:var(--blue);border-color:var(--blue);color:#fff}
+.stn-pick:active{transform:scale(.93)}
+
+/* Field live */
+.field-header{padding:1rem;background:var(--bg);flex-shrink:0;text-align:center}
+.field-station-label{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
+.field-shooter-name{font-size:26px;font-weight:800;margin:.1rem 0}
+.field-format-badge{display:inline-block}
+.field-progress{display:flex;gap:5px;padding:.5rem 1rem;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.fp-seg{flex:1;height:8px;border-radius:4px;background:var(--bg3)}
+.fp-seg.done{background:var(--green)}
+.fp-seg.active{background:var(--blue)}
+
+.field-shots{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem 1rem;gap:16px}
+.field-shot-grid{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.field-shot-btn{width:72px;height:72px;border-radius:18px;border:3px solid var(--border2);background:var(--bg2);font-size:26px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;color:var(--text3)}
+.field-shot-btn.hit{background:var(--hit);border-color:var(--hit);color:#fff}
+.field-shot-btn.miss{background:var(--miss);border-color:var(--miss);color:#fff}
+.field-shot-btn:active{transform:scale(.87)}
+.field-total{font-size:48px;font-weight:800;color:var(--text)}
+.field-total-sub{font-size:14px;color:var(--text2);margin-top:-4px;font-weight:500}
+.field-advance{display:none;flex-direction:column;align-items:center;gap:10px;padding:1rem}
+.field-advance.show{display:flex}
+.advance-label{font-size:14px;color:var(--text2);font-weight:500}
+.advance-btn{width:100%;max-width:320px;padding:18px;border-radius:16px;background:var(--blue);color:#fff;font-size:18px;font-weight:700;border:none;cursor:pointer;font-family:inherit}
+.advance-btn:active{transform:scale(.97)}
+.field-done-banner{background:var(--green);padding:1rem;text-align:center;color:#fff;font-weight:700;font-size:16px;flex-shrink:0;display:none}
+.field-done-banner.show{display:block}
+
+/* ═══════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════ */
+.dash-header{padding:.75rem 1rem;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.dash-title{font-size:18px;font-weight:800}
+
+.tour-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--rlg);margin-bottom:.75rem;overflow:hidden}
+.tour-hdr{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1rem;cursor:pointer;gap:8px}
+.tour-hdr:active{background:var(--bg2)}
+.tour-body{display:none;border-top:1px solid var(--border)}
+.tour-body.open{display:block}
+.day-row{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid var(--border);gap:8px}
+.day-row:last-child{border-bottom:none}
+.chev{font-size:16px;color:var(--text3);transition:transform .2s;flex-shrink:0}
+.chev.open{transform:rotate(180deg)}
+
+.stn-avg-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:.5rem 0}
+.stn-avg-card{background:var(--bg2);border-radius:var(--r);padding:.6rem .4rem;text-align:center;cursor:pointer;border:1px solid var(--border)}
+.stn-avg-card:active{background:var(--bg3)}
+.stn-avg-card .san{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.03em}
+.stn-avg-card .sav{font-size:18px;font-weight:700}
+.stn-avg-card .spct{font-size:10px;color:var(--text3)}
+.stn-bar{height:3px;background:var(--border);border-radius:2px;margin-top:5px}
+.stn-bar-fill{height:3px;background:var(--blue);border-radius:2px}
+
+.cw{position:relative;width:100%;height:200px;margin:.5rem 0}
+
+/* ═══════════════════════════════════════════════════
+   PROFILE SUB-VIEW
+═══════════════════════════════════════════════════ */
+#sub-view{position:fixed;inset:0;background:var(--bg3);z-index:30;display:none;flex-direction:column}
+#sub-view.open{display:flex}
+</style>
+</head>
+<body>
+<!-- AUTH OVERLAY -->
+<div id="auth-overlay" style="display:none;position:fixed;inset:0;background:var(--bg3);z-index:200;overflow-y:auto;padding:2rem 1rem">
+  <div style="max-width:400px;margin:0 auto;padding-top:3rem">
+    <div style="text-align:center;margin-bottom:2rem">
+      <div style="font-size:48px;margin-bottom:.5rem">&#127992;</div>
+      <h1 style="font-size:28px;font-weight:800;margin-bottom:.25rem">Trap Journal</h1>
+      <p style="color:var(--text2);font-size:14px">Sign in to your account</p>
+    </div>
+
+    <!-- Tab toggle -->
+    <div class="seg" style="grid-template-columns:1fr 1fr;margin-bottom:1.5rem" id="auth-tab-seg">
+      <button class="active" onclick="setAuthTab('magic',this)" style="padding:10px">Magic link</button>
+      <button onclick="setAuthTab('password',this)" style="padding:10px">Email + password</button>
+    </div>
+
+    <!-- Magic link form -->
+    <div id="auth-magic-form">
+      <div class="fi"><label>Email</label><input type="email" id="auth-magic-email" placeholder="you@example.com" style="font-size:16px;padding:13px 14px"></div>
+      <button class="btn btn-primary" style="margin-top:.5rem" onclick="sendMagicLink()"><i class="ti ti-send"></i> Send magic link</button>
+      <div id="auth-magic-sent" style="display:none;margin-top:1rem;padding:1rem;background:var(--green-bg);border-radius:var(--r);font-size:14px;color:var(--green-text);text-align:center">
+        <i class="ti ti-circle-check"></i> Check your email for a sign-in link!
+      </div>
+    </div>
+
+    <!-- Password form -->
+    <div id="auth-password-form" style="display:none">
+      <div class="fi"><label>Email</label><input type="email" id="auth-pw-email" placeholder="you@example.com" style="font-size:16px;padding:13px 14px"></div>
+      <div class="fi"><label>Password</label><input type="password" id="auth-pw-password" placeholder="Your password" style="font-size:16px;padding:13px 14px"></div>
+      <div style="display:flex;gap:8px;margin-top:.5rem">
+        <button class="btn btn-primary" style="flex:1" onclick="signInPassword()"><i class="ti ti-login"></i> Sign in</button>
+        <button class="btn btn-secondary" style="flex:1" onclick="signUpPassword()"><i class="ti ti-user-plus"></i> Sign up</button>
+      </div>
+      <div id="auth-pw-error" style="display:none;margin-top:.75rem;padding:.75rem;background:var(--red-bg);border-radius:var(--r);font-size:13px;color:var(--red)"></div>
+    </div>
+
+    <p style="font-size:12px;color:var(--text3);text-align:center;margin-top:1.5rem">Access requires an invite from your club admin.</p>
+  </div>
+</div>
+
+<!-- CLAIM PROFILE OVERLAY -->
+<div id="claim-overlay" style="display:none;position:fixed;inset:0;background:var(--bg3);z-index:200;overflow-y:auto;padding:2rem 1rem">
+  <div style="max-width:400px;margin:0 auto;padding-top:3rem">
+    <div style="text-align:center;margin-bottom:2rem">
+      <div style="font-size:48px;margin-bottom:.5rem">&#127992;</div>
+      <h1 style="font-size:22px;font-weight:800;margin-bottom:.25rem">Welcome to Trap Journal</h1>
+      <p style="color:var(--text2);font-size:14px">Link your account to a shooter profile</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Claim existing profile</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:.75rem">If you already have scores in the system, select your name.</p>
+      <select id="claim-select" style="font-size:15px;padding:12px 14px;margin-bottom:.75rem"><option value="">-- select your name --</option></select>
+      <button class="btn btn-primary" onclick="claimProfile()"><i class="ti ti-user-check"></i> Claim this profile</button>
+    </div>
+    <div style="text-align:center;padding:.75rem 0;color:var(--text2);font-size:13px">or</div>
+    <div class="card">
+      <div class="card-title">Create new profile</div>
+      <div class="fi"><label>Your name</label><input type="text" id="claim-new-name" placeholder="Full name" style="font-size:15px;padding:12px 14px"></div>
+      <div class="fi"><label>Class (optional)</label>
+        <select id="claim-new-cls" style="font-size:15px;padding:12px 14px">
+          <option value="">Select class</option><option>AA</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="createAndClaimProfile()"><i class="ti ti-user-plus"></i> Create profile</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+
+<!-- ══════════════ DASHBOARD VIEW ══════════════ -->
+<div class="view active" id="view-dash">
+  <div class="dash-header">
+    <span class="dash-title"><i class="ti ti-target-arrow" style="font-size:20px;vertical-align:-3px;margin-right:4px"></i>Trap Journal</span>
+    <div class="row" style="gap:8px">
+      <span id="sync-dot" style="font-size:12px;color:var(--text2)"></span>
+      <button class="btn btn-secondary btn-sm" id="account-btn" onclick="switchView('profile',document.getElementById('nav-profile'))" style="display:none"><i class="ti ti-user-circle"></i> <span id="account-label"></span></button>
+      <button class="btn btn-secondary btn-sm" onclick="openModal('round')"><i class="ti ti-plus"></i> Round</button>
+    </div>
+  </div>
+
+  <div class="scroll-area">
+    <!-- Start session CTA -->
+    <div id="active-session-banner" style="display:none;background:var(--blue);border-radius:var(--rlg);padding:1rem;margin-bottom:.75rem;cursor:pointer" onclick="switchView('session',document.getElementById('nav-session'))">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.05em">Active session</div>
+          <div style="font-size:16px;font-weight:800;color:#fff;margin-top:2px" id="active-session-label">Tap to continue</div>
+        </div>
+        <i class="ti ti-arrow-right" style="color:#fff;font-size:24px"></i>
+      </div>
+    </div>
+    <button id="start-session-btn" class="btn btn-primary" style="width:100%;margin-bottom:1rem;padding:14px;font-size:16px" onclick="switchView('session',document.getElementById('nav-session'))">
+      <i class="ti ti-notebook"></i> Start practice session
+    </button>
+    <!-- stat cards -->
+    <div class="stat-grid" id="d-stats"></div>
+
+    <!-- quick filters -->
+    <div class="row" style="gap:8px;margin-bottom:.75rem">
+      <select id="d-fmt" onchange="renderDash()" style="flex:1;padding:9px 12px;font-size:13px">
+        <option value="">All formats</option><option>Singles</option><option>Handicap</option><option>Doubles</option>
+      </select>
+      <select id="d-evt" onchange="renderDash()" style="flex:1;padding:9px 12px;font-size:13px">
+        <option value="">All events</option>
+      </select>
+    </div>
+
+    <!-- recent rounds -->
+    <div class="card" id="recent-rounds-card">
+      <div class="card-title">Recent rounds</div>
+      <div id="d-rounds"></div>
+    </div>
+
+    <!-- station averages -->
+    <div class="card">
+      <div class="card-title">Station averages</div>
+      <div class="stn-avg-grid" id="d-stn-avgs"></div>
+    </div>
+
+    <!-- events / tournaments -->
+    <div id="d-events"></div>
+    <div id="d-session-feed" style="margin-top:.25rem"></div>
+
+  </div><!-- /scroll-area -->
+</div><!-- /view-dash -->
+
+<!-- ══════════════ SCORER VIEW ══════════════ -->
+
+<div class="view" id="view-scorer">
+  <!-- SETUP -->
+  <div id="scorer-setup">
+    <div class="dash-header"><span class="dash-title">Scorer</span></div>
+    <div class="scroll-area">
+      <div class="card">
+        <div class="card-title">Format</div>
+        <div class="seg" style="grid-template-columns:repeat(3,1fr)" id="scorer-fmt-seg">
+          <button class="active" onclick="setScorerFmt('Singles',this)">Singles</button>
+          <button onclick="setScorerFmt('Handicap',this)">Handicap</button>
+          <button onclick="setScorerFmt('Doubles',this)">Doubles</button>
+        </div>
+        <div class="fi" id="scorer-yd-fi" style="display:none;margin-top:.75rem">
+          <label>Yardage</label>
+          <input type="number" id="scorer-yd" min="19" max="27" value="20">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Event (optional)</div>
+        <select id="scorer-event"><option value="">-- no event --</option></select>
+      </div>
+      <div class="card">
+        <div class="card-title">Date</div>
+        <input type="date" id="scorer-date">
+      </div>
+      <div class="card">
+        <div class="card-title">Squad &amp; starting stations</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:.75rem">Pick each shooter and their starting station. The squad rotates automatically.</p>
+        <div id="scorer-slots"></div>
+        <div class="divider"></div>
+        <div class="row" style="gap:8px;margin-top:.5rem">
+          <input type="text" id="scorer-new-name" placeholder="Add new shooter..." style="flex:1;padding:10px 12px;font-size:14px">
+          <button class="btn btn-secondary btn-sm" onclick="addShooterFromScorer()">Add</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="startScorer()"><i class="ti ti-player-play"></i> Start scoring</button>
+    </div>
+  </div>
+
+  <!-- LIVE SCORING -->
+  <div id="scorer-live" style="display:none;flex-direction:column;flex:1">
+    <div style="padding:.6rem 1rem;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0">
+      <div class="row-between">
+        <button class="btn btn-secondary btn-sm" onclick="endScorer()"><i class="ti ti-x"></i> Cancel</button>
+        <span id="scorer-format-badge"></span>
+        <span style="font-size:13px;font-weight:600;color:var(--text2)" id="scorer-rotation-label"></span>
+      </div>
+    </div>
+    <div id="scorer-station-map" style="background:var(--bg2);border-bottom:1px solid var(--border);padding:.55rem 1rem;flex-shrink:0;overflow-x:auto"></div>
+    <div style="flex:1;overflow-y:auto" id="scorer-scorecards"></div>
+    <div style="padding:.75rem 1rem;background:var(--bg);border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;align-items:center">
+      <div style="flex:1;font-size:12px;color:var(--text2)" id="scorer-station-hint"></div>
+      <button class="btn btn-secondary btn-sm" id="scorer-undo-btn" onclick="scorerUndo()" style="display:none"><i class="ti ti-arrow-back-up"></i> Undo</button>
+      <button class="btn btn-primary" id="scorer-action-btn" onclick="scorerAction()" style="min-width:150px;font-size:14px;padding:12px 16px"></button>
+    </div>
+  </div>
+
+  <!-- DONE -->
+  <div id="scorer-done" style="display:none;flex-direction:column;flex:1">
+    <div class="dash-header"><span class="dash-title">Round complete</span></div>
+    <div class="scroll-area">
+      <div id="scorer-summary"></div>
+      <button class="btn btn-primary" onclick="saveScorer()"><i class="ti ti-device-floppy"></i> Save all rounds</button>
+      <div style="height:.5rem"></div>
+      <button class="btn btn-secondary" style="width:100%" onclick="endScorer()">Discard</button>
+    </div>
+  </div>
+</div><!-- /view-scorer -->
+
+
+
+<!-- ══════════════ FIELD VIEW ══════════════ -->
+<div class="view" id="view-field">
+  <!-- SETUP -->
+  <div id="field-setup">
+    <div class="dash-header"><span class="dash-title">Field entry</span></div>
+    <div class="scroll-area">
+      <div class="card">
+        <div class="card-title">Shooter</div>
+        <select id="field-shooter" style="font-size:15px" onchange="onFieldShooterChange()"></select>
+        <div id="field-loadout-wrap" style="display:none;margin-top:8px">
+          <select id="field-loadout" style="font-size:14px;padding:9px 12px"><option value="">-- no shell loadout --</option></select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Format</div>
+        <div class="seg" style="grid-template-columns:repeat(3,1fr)" id="field-fmt-seg">
+          <button class="active" onclick="setFieldFmt('Singles',this)">Singles</button>
+          <button onclick="setFieldFmt('Handicap',this)">Handicap</button>
+          <button onclick="setFieldFmt('Doubles',this)">Doubles</button>
+        </div>
+        <div id="field-yd-wrap" style="display:none;margin-top:10px">
+          <label style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:5px">Yardage <span style="color:var(--red)">*</span></label>
+          <input type="number" id="field-yd" min="19" max="27" placeholder="19-27 yards" style="font-size:18px;font-weight:700;text-align:center;padding:12px">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Event (optional)</div>
+        <select id="field-event"><option value="">-- no event --</option></select>
+      </div>
+      <div class="card">
+        <div class="card-title">Date</div>
+        <input type="date" id="field-date">
+      </div>
+      <div class="card">
+        <div class="card-title">Start at station</div>
+        <div class="start-station-grid" id="field-start-stns"></div>
+      </div>
+      <button class="btn btn-primary" onclick="startField()"><i class="ti ti-player-play"></i> Start</button>
+    </div>
+  </div>
+
+  <!-- LIVE FIELD -->
+  <div id="field-live" style="display:none">
+    <div class="field-header">
+      <div class="field-station-label" id="fl-stn-label">Station 1 of 5</div>
+      <div class="field-shooter-name" id="fl-shooter-name"></div>
+      <div class="field-format-badge" id="fl-fmt-badge"></div>
+    </div>
+    <div class="field-progress" id="fl-progress"></div>
+    <div class="field-shots">
+      <div>
+        <div class="field-total" id="fl-total">0</div>
+        <div class="field-total-sub" id="fl-total-sub">of 25</div>
+      </div>
+      <div class="field-shot-grid" id="fl-shots"></div>
+    </div>
+    <div class="field-done-banner" id="fl-done-banner">Round complete!</div>
+    <div class="field-advance" id="fl-advance">
+      <div class="advance-label" id="fl-advance-label">Station done</div>
+      <button class="advance-btn" id="fl-advance-btn" onclick="fieldAdvance()">Next station <i class="ti ti-arrow-right"></i></button>
+    </div>
+    <div style="padding:.75rem 1rem;background:var(--bg);border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px" id="fl-bottom-bar">
+      <button class="btn btn-secondary" style="flex:1" onclick="endField()"><i class="ti ti-x"></i> Cancel</button>
+      <button class="btn btn-primary" style="flex:2;display:none" id="fl-save-btn" onclick="saveField()"><i class="ti ti-device-floppy"></i> Save round</button>
+    </div>
+  </div>
+</div><!-- /view-field -->
+
+<!-- ══════════════ MORE VIEW ══════════════ -->
+<!-- VIEW: PROFILE -->
+<div class="view" id="view-profile">
+  <div class="dash-header">
+    <span class="dash-title">My Profile</span>
+    <button class="btn btn-secondary btn-sm" onclick="signOut()"><i class="ti ti-logout"></i> Sign out</button>
+  </div>
+  <div class="scroll-area">
+    <!-- Account card -->
+    <div class="card" id="profile-account-card" style="text-align:center;padding:1.5rem 1rem">
+      <div class="avatar" id="profile-avatar" style="width:64px;height:64px;font-size:22px;margin:0 auto .75rem">?</div>
+      <div style="font-size:20px;font-weight:800" id="profile-name">--</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:3px" id="profile-email">--</div>
+      <div id="profile-admin-badge" style="display:none;margin-top:8px">
+        <span style="font-size:11px;font-weight:700;background:var(--amber-bg);color:var(--amber-text);padding:3px 12px;border-radius:999px">Club Admin</span>
+      </div>
+    </div>
+
+    <!-- My stats quick view -->
+    <div class="stat-grid" id="profile-my-stats"></div>
+
+    <!-- ATA number -->
+    <div class="card">
+      <div class="card-title">ATA number</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="profile-ata-input" placeholder="e.g. 123456" style="flex:1;font-size:16px;font-weight:600;padding:10px 12px;letter-spacing:.05em">
+        <button class="btn btn-secondary btn-sm" onclick="saveMyATA()">Save</button>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:6px" id="profile-ata-hint">No ATA number on file</div>
+    </div>
+
+    <!-- Shell loadouts -->
+    <div class="card">
+      <div class="card-title">Shell loadouts</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:.75rem">Save your go-to shell setups. Pick one before each round.</p>
+      <div id="profile-loadout-list"></div>
+      <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+        <input type="text" id="profile-loadout-name" placeholder="Label (e.g. Singles)" style="flex:1;min-width:100px;font-size:14px;padding:9px 10px">
+        <input type="text" id="profile-loadout-details" placeholder="Details (e.g. Rem Gun Club 7.5)" style="flex:2;min-width:140px;font-size:14px;padding:9px 10px">
+      </div>
+      <button class="btn btn-secondary btn-sm" style="width:100%" onclick="addMyLoadout()"><i class="ti ti-plus"></i> Add loadout</button>
+    </div>
+
+    <!-- Score history -->
+    <div class="card">
+      <div class="card-title">My recent rounds</div>
+      <div id="profile-recent-rounds"></div>
+    </div>
+
+    <!-- Per-station averages -->
+    <div class="card">
+      <div class="card-title">My station averages</div>
+      <div class="stn-avg-grid" id="profile-stn-avgs"></div>
+    </div>
+
+    <!-- Score trend chart -->
+    <div class="card">
+      <div class="card-title">Score trend</div>
+      <div style="position:relative;width:100%;height:200px"><canvas id="profile-trend-chart" role="img" aria-label="My score trend">Score trend.</canvas></div>
+    </div>
+
+    <!-- Gun Locker -->
+    <div class="section-label">Gun locker</div>
+    <div id="gun-locker-list"></div>
+    <button class="btn btn-secondary" style="width:100%;margin-bottom:.75rem" onclick="openModal('gun')">
+      <i class="ti ti-plus"></i> Add gun
+    </button>
+
+    <!-- Admin section -->
+    <div class="section-label" id="admin-section-label" style="display:none">Admin</div>
+    <div id="admin-section" style="display:none">
+      <div class="card">
+        <div class="card-title">Send invite</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:.75rem">Send an invite link to a new club member.</p>
+        <div style="display:flex;gap:8px">
+          <input type="email" id="invite-email" placeholder="member@example.com" style="flex:1;font-size:14px;padding:10px 12px">
+          <button class="btn btn-primary btn-sm" onclick="sendInvite()"><i class="ti ti-send"></i> Invite</button>
+        </div>
+        <div id="invite-result" style="font-size:13px;margin-top:.5rem;color:var(--text2)"></div>
+        <div style="margin-top:1rem">
+          <div class="card-title" style="margin-bottom:.5rem">Pending invites</div>
+          <div id="invite-list"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /view-profile -->
+
+<!-- VIEW: CLUB -->
+<div class="view" id="view-club">
+  <div class="dash-header"><span class="dash-title">Club</span></div>
+  <div class="scroll-area">
+
+    <div class="section-label">Shooters</div>
+    <div class="card" style="padding:.5rem">
+      <div style="display:flex;gap:8px;margin-bottom:8px;padding:.25rem .25rem 0;flex-wrap:wrap">
+        <input type="text" id="m-new-name" placeholder="Full name..." style="flex:2;min-width:120px;padding:10px 12px;font-size:14px">
+        <select id="m-new-cls" style="flex:1;min-width:80px;padding:10px 12px;font-size:14px">
+          <option value="">Class</option><option>AA</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:.75rem;padding:0 .25rem">
+        <input type="text" id="m-new-shells" placeholder="Shell notes..." style="flex:1;padding:10px 12px;font-size:14px">
+        <button class="btn btn-secondary btn-sm" onclick="addShooter()">Add</button>
+      </div>
+      <div id="m-shooters-list"></div>
+    </div>
+
+    <div class="section-label">Events & tournaments</div>
+    <div class="row" style="gap:8px;margin-bottom:.5rem">
+      <button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="openModal('event')"><i class="ti ti-calendar-plus"></i> New event</button>
+      <button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="openModal('tournament')"><i class="ti ti-tournament"></i> New tournament</button>
+    </div>
+    <div id="m-events-list"></div>
+
+    <div class="section-label">Charts</div>
+    <div class="card">
+      <div class="row" style="gap:8px;margin-bottom:.75rem;flex-wrap:wrap">
+        <select id="ch-shooter" onchange="renderCharts()" style="flex:1;min-width:120px;font-size:13px;padding:9px 12px"><option value="">All shooters</option></select>
+        <select id="ch-fmt" onchange="renderCharts()" style="flex:1;min-width:100px;font-size:13px;padding:9px 12px"><option value="">All formats</option><option>Singles</option><option>Handicap</option><option>Doubles</option></select>
+      </div>
+      <div class="row" style="gap:6px;margin-bottom:.75rem;flex-wrap:wrap">
+        <label style="font-size:12px;color:var(--text2);white-space:nowrap;align-self:center">From</label>
+        <input type="date" id="ch-from" onchange="renderCharts()" style="flex:1;min-width:100px;font-size:13px;padding:9px 12px">
+        <label style="font-size:12px;color:var(--text2);white-space:nowrap;align-self:center">To</label>
+        <input type="date" id="ch-to" onchange="renderCharts()" style="flex:1;min-width:100px;font-size:13px;padding:9px 12px">
+      </div>
+      <div class="card-title">Score over time</div>
+      <div class="cw"><canvas id="ch-line" role="img" aria-label="Score trend">Score trend.</canvas></div>
+      <div class="divider"></div>
+      <div class="card-title" style="margin-top:.5rem">Avg by shooter</div>
+      <div id="ch-bar-wrap" class="cw"><canvas id="ch-bar" role="img" aria-label="Avg per shooter">Avg per shooter.</canvas></div>
+    </div>
+
+  </div>
+
+  </div>
+</div><!-- /view-club -->
+
+<!-- SESSION VIEW -->
+<div class="view" id="view-session">
+  <div id="session-setup" style="display:flex;flex-direction:column;flex:1">
+    <div class="dash-header">
+      <span class="dash-title">New session</span>
+      <button class="btn btn-secondary btn-sm" onclick="switchView('dash',document.getElementById('nav-dash'))"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="scroll-area">
+      <div class="card">
+        <div class="card-title">Date &amp; location</div>
+        <div class="fi"><label>Date</label><input type="date" id="ses-date"></div>
+        <div class="fi" style="margin-bottom:0"><label>Location</label><input type="text" id="ses-location" placeholder="e.g. Nashville Gun Club"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Gun</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:.75rem">Select which gun you are shooting today.</p>
+        <div id="ses-gun-list" style="margin-bottom:.5rem"></div>
+        <button class="btn btn-secondary btn-sm" style="width:100%" onclick="openModal('gun')"><i class="ti ti-plus"></i> Add a gun first</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Conditions</div>
+        <div class="fi"><label>Weather</label>
+          <div class="seg" style="grid-template-columns:repeat(4,1fr)" id="ses-weather-seg">
+            <button onclick="segPick(this,'ses-weather-seg','ses-weather','sunny')">Sunny</button>
+            <button onclick="segPick(this,'ses-weather-seg','ses-weather','overcast')">Overcast</button>
+            <button onclick="segPick(this,'ses-weather-seg','ses-weather','cloudy')">Cloudy</button>
+            <button onclick="segPick(this,'ses-weather-seg','ses-weather','rain')">Rain</button>
+          </div><input type="hidden" id="ses-weather">
+        </div>
+        <div class="fi"><label>Light</label>
+          <div class="seg" style="grid-template-columns:repeat(4,1fr)" id="ses-light-seg">
+            <button onclick="segPick(this,'ses-light-seg','ses-light','bright')">Bright</button>
+            <button onclick="segPick(this,'ses-light-seg','ses-light','flat')">Flat</button>
+            <button onclick="segPick(this,'ses-light-seg','ses-light','low sun')">Low sun</button>
+            <button onclick="segPick(this,'ses-light-seg','ses-light','dusk')">Dusk</button>
+          </div><input type="hidden" id="ses-light">
+        </div>
+        <div class="fi"><label>Wind</label>
+          <div class="seg" style="grid-template-columns:repeat(4,1fr)" id="ses-wind-seg">
+            <button onclick="segPick(this,'ses-wind-seg','ses-wind','none')">None</button>
+            <button onclick="segPick(this,'ses-wind-seg','ses-wind','light')">Light</button>
+            <button onclick="segPick(this,'ses-wind-seg','ses-wind','moderate')">Moderate</button>
+            <button onclick="segPick(this,'ses-wind-seg','ses-wind','strong')">Strong</button>
+          </div><input type="hidden" id="ses-wind">
+        </div>
+        <div class="fi" style="margin-bottom:0"><label>Temperature</label>
+          <div class="seg" style="grid-template-columns:repeat(4,1fr)" id="ses-temp-seg">
+            <button onclick="segPick(this,'ses-temp-seg','ses-temp','cold')">Cold</button>
+            <button onclick="segPick(this,'ses-temp-seg','ses-temp','cool')">Cool</button>
+            <button onclick="segPick(this,'ses-temp-seg','ses-temp','warm')">Warm</button>
+            <button onclick="segPick(this,'ses-temp-seg','ses-temp','hot')">Hot</button>
+          </div><input type="hidden" id="ses-temp">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">How are you feeling?</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px" id="ses-physical-tags">
+          <button class="tag-btn" onclick="toggleTag(this)">Rested</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Tired</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Caffeinated</button>
+          <button class="tag-btn" onclick="toggleTag(this)">No caffeine</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Sore shoulder</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Sore neck</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Hungover</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Not feeling well</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Feeling great</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">What are you working on today?</div>
+        <textarea id="ses-pre-focus" rows="3" placeholder="e.g. Gun mount timing, hard lefts from station 1, follow-through..." style="background:var(--bg2);color:var(--text);border:1px solid var(--border2);border-radius:var(--r);padding:12px;font-size:14px;font-family:inherit;width:100%;resize:vertical;margin-bottom:.75rem"></textarea>
+        <div style="display:flex;flex-wrap:wrap;gap:8px" id="ses-focus-tags">
+          <button class="tag-btn" onclick="toggleTag(this)">Gun mount</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Follow-through</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Hard lefts</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Hard rights</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Straight-aways</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Station 1</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Station 2</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Station 3</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Station 4</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Station 5</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Eye lead</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Stance</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Hold point</button>
+          <button class="tag-btn" onclick="toggleTag(this)">Trigger pull</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="font-size:16px;padding:14px;width:100%" onclick="beginSession()">
+        <i class="ti ti-player-play"></i> Begin session
+      </button>
+    </div>
+  </div>
+
+  <div id="session-active" style="display:none;flex-direction:column;flex:1">
+    <div class="dash-header">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Active session</div>
+        <div style="font-weight:800;font-size:16px" id="ses-active-label">--</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="showSessionWrapup()"><i class="ti ti-flag-check"></i> Wrap up</button>
+    </div>
+    <div class="scroll-area">
+      <div class="stat-grid" id="ses-round-stats"></div>
+      <div class="card">
+        <div class="card-title">Rounds this session</div>
+        <div id="ses-rounds-list"><div class="empty">No rounds yet -- add one below</div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:.75rem">
+        <button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="openModal('round',{sessionMode:true})"><i class="ti ti-plus"></i> Add round</button>
+        <button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="switchView('scorer',document.getElementById('nav-scorer'))"><i class="ti ti-clipboard-list"></i> Scorer</button>
+        <button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="switchView('field',document.getElementById('nav-field'))"><i class="ti ti-bolt"></i> Field</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="session-wrapup" style="display:none;flex-direction:column;flex:1">
+    <div class="dash-header"><span class="dash-title">Wrap up</span></div>
+    <div class="scroll-area">
+      <div class="card" id="ses-wrapup-summary"></div>
+      <div class="card">
+        <div class="card-title">Overall rating</div>
+        <div style="display:flex;gap:10px;justify-content:center;margin:.5rem 0 1rem" id="ses-stars">
+          <button class="rating-star" onclick="setSessionRating(1)">&#9733;</button>
+          <button class="rating-star" onclick="setSessionRating(2)">&#9733;</button>
+          <button class="rating-star" onclick="setSessionRating(3)">&#9733;</button>
+          <button class="rating-star" onclick="setSessionRating(4)">&#9733;</button>
+          <button class="rating-star" onclick="setSessionRating(5)">&#9733;</button>
+        </div>
+        <input type="hidden" id="ses-rating" value="">
+      </div>
+      <div class="card">
+        <div class="card-title">Reflection</div>
+        <textarea id="ses-post-notes" rows="6" placeholder="What felt good? What needs work? Any breakthroughs or struggles? Notes for next time..." style="background:var(--bg2);color:var(--text);border:1px solid var(--border2);border-radius:var(--r);padding:12px;font-size:14px;font-family:inherit;width:100%;resize:vertical"></textarea>
+      </div>
+      <button class="btn btn-primary" style="font-size:16px;padding:14px;width:100%" onclick="saveSession()"><i class="ti ti-device-floppy"></i> Save session</button>
+      <div style="height:.5rem"></div>
+      <button class="btn btn-secondary" style="width:100%" onclick="discardSession()">Discard</button>
+    </div>
+  </div>
+</div><!-- /view-session -->
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="switchView('dash',this)" id="nav-dash">
+    <i class="ti ti-home"></i><span class="nav-label">Home</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('scorer',this)" id="nav-scorer">
+    <i class="ti ti-clipboard-list"></i><span class="nav-label">Scorer</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('session',this)" id="nav-session">
+    <i class="ti ti-notebook"></i><span class="nav-label">Session</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('field',this)" id="nav-field">
+    <i class="ti ti-bolt"></i><span class="nav-label">Field</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('club',this)" id="nav-club">
+    <i class="ti ti-users"></i><span class="nav-label">Club</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('profile',this)" id="nav-profile">
+    <i class="ti ti-user-circle"></i><span class="nav-label">Profile</span>
+  </button>
+</nav>
+
+<!-- ══════════════ SUB-VIEW (profiles, station detail) ══════════════ -->
+<div id="sub-view">
+  <div class="back-bar">
+    <button onclick="closeSub()"><i class="ti ti-arrow-left"></i> <span id="sub-back-label">Back</span></button>
+    <span class="back-title" id="sub-title"></span>
+    <span style="width:60px"></span>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:1rem;padding-bottom:1.5rem" id="sub-content"></div>
+</div>
+
+<!-- ══════════════ MODAL ══════════════ -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal-sheet" id="modal-sheet"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+
+const SUPABASE_URL = 'https://iakhjsutpufygbyqpnsg.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlha2hqc3V0cHVmeWdieXFwbnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzODMwNDksImV4cCI6MjA5Njk1OTA0OX0.bSGM9Emj299Q5olsu9nZMlf0UyfdUucLQnlRuc57TBQ';
+
+
+const USE_SB = true;
+const ADMIN_EMAIL = 'joshdotbrewer@gmail.com';
+let db = null;
+if (USE_SB) db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Auth state
+let currentUser = null;
+let currentShooterProfile = null;
+
+let rounds=[], shooters=[], events=[], tournaments=[];
+let guns=[], sessions=[];
+let lineChart=null, barChart=null;
+let activeSession=null; // session being built
+
+
+
+
+let fieldFmt='Singles', fieldStartStn=0, fieldCurStn=0, fieldShots=[];
+// fieldShots[stationIdx][shotIdx] = 1|0
+
+
+function uid(){return 'id'+Date.now()+Math.random().toString(36).slice(2,6);}
+function evName(eid){return eid?(events.find(e=>e.id===eid)||{}).name||'':'';}
+function eventsForTournament(tid){return events.filter(e=>e.tournament_id===tid||e.tournamentId===tid);}
+function standaloneEvents(){return events.filter(e=>!e.tournament_id&&!e.tournamentId);}
+function roundsForEvent(eid){return rounds.filter(r=>(r.event_id||r.eventId)===eid);}
+function roundsForTournament(tid){const eids=new Set(eventsForTournament(tid).map(e=>e.id));return rounds.filter(r=>eids.has(r.event_id||r.eventId));}
+function statsFor(rs){if(!rs.length)return{n:0,avg:'--',high:'--',shooters:0};return{n:rs.length,avg:(rs.reduce((a,r)=>a+r.total,0)/rs.length).toFixed(1),high:Math.max(...rs.map(r=>r.total)),shooters:new Set(rs.map(r=>r.shooter)).size};}
+function maxPerStn(fmt){return fmt==='Doubles'?10:5;}
+function maxTotal(fmt){return fmt==='Doubles'?50:25;}
+function fmtBadge(fmt){const cls=fmt==='Handicap'?'bh':fmt==='Doubles'?'bd':'bs';return `<span class="badge ${cls}">${fmt}</span>`;}
+function safeStr(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+function initials(name){return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();}
+function ataBadge(shooterName){
+  const s=shooters.find(x=>x.name===shooterName);
+  if(!s||!s.ata_number)return '';
+  return ' <span style="font-size:10px;font-weight:500;color:var(--text2);background:var(--bg3);border-radius:4px;padding:1px 5px">#'+s.ata_number+'</span>';
+}
+
+
+function toast(msg,ms=2200){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms);
+}
+
+
+function localLoad(){
+  try{
+    rounds=JSON.parse(localStorage.getItem('tr_rounds')||'[]');
+    shooters=JSON.parse(localStorage.getItem('tr_shooters')||'["Alice Morgan","Bob Tanner","Chris Webb"]');
+    events=JSON.parse(localStorage.getItem('tr_events')||'[]');
+    tournaments=JSON.parse(localStorage.getItem('tr_tournaments')||'[]');
+  }catch(e){}
+}
+function localSave(){
+  try{
+    localStorage.setItem('tr_rounds',JSON.stringify(rounds));
+    localStorage.setItem('tr_shooters',JSON.stringify(shooters));
+    localStorage.setItem('tr_events',JSON.stringify(events));
+    localStorage.setItem('tr_tournaments',JSON.stringify(tournaments));
+  }catch(e){}
+}
+async function dbLoad(){
+  if(!USE_SB){localLoad();return;}
+  document.getElementById('sync-dot').innerHTML='<i class="ti ti-refresh" style="animation:spin .8s linear infinite"></i>';
+  try{
+    const [t,e,s,r]=await Promise.all([
+      db.from('tournaments').select('*').order('created_at'),
+      db.from('events').select('*').order('date'),
+      db.from('shooters').select('*').order('name'),
+      db.from('rounds').select('*').order('date',{ascending:false}),
+    ]);
+    tournaments=t.data||[];
+    events=e.data||[];
+    // Load private user data if logged in
+    if(currentUser){
+      const [gRes,sesRes]=await Promise.all([
+        db.from('guns').select('*').eq('user_id',currentUser.id).order('created_at'),
+        db.from('sessions').select('*').eq('user_id',currentUser.id).order('date',{ascending:false}),
+      ]);
+      guns=gRes.data||[];
+      sessions=sesRes.data||[];
+    }
+    shooters=(s.data||[]).map(x=>({
+      name:x.name,
+      shell_notes:x.shell_notes||'',
+      shell_loadouts:x.shell_loadouts?(typeof x.shell_loadouts==='string'?JSON.parse(x.shell_loadouts):x.shell_loadouts):[],
+      ata_number:x.ata_number||'',
+      auth_user_id:x.auth_user_id||null,
+      is_claimed:x.is_claimed||false,
+      id:x.id
+    }));
+    rounds=(r.data||[]).map(x=>({...x,stations:typeof x.stations==='string'?JSON.parse(x.stations):x.stations}));
+    document.getElementById('sync-dot').innerHTML='<i class="ti ti-check" style="color:var(--green)"></i>';
+  }catch(err){localLoad();document.getElementById('sync-dot').innerHTML='<i class="ti ti-wifi-off" style="color:var(--text3)"></i>';}
+}
+async function dbInsertRound(row){
+  if(!USE_SB){row.id=uid();rounds.unshift(row);localSave();return row;}
+  const {data,error}=await db.from('rounds').insert({shooter:row.shooter,date:row.date,format:row.format,stations:JSON.stringify(row.stations),total:row.total,yardage:row.yardage||null,shell_loadout:row.shell_loadout||null,event_id:row.event_id||null,session_id:row.session_id||null}).select().single();
+  if(error)throw error;
+  const r2={...data,stations:row.stations,eventId:data.event_id};
+  rounds.unshift(r2);return r2;
+}
+async function dbInsertShooter(name,shell_notes){
+  const obj={name,shell_notes:shell_notes||''};
+  if(!USE_SB){shooters.push(obj);localSave();return;}
+  const {data,error}=await db.from('shooters').insert({name,shell_notes:shell_notes||'',shell_loadouts:JSON.stringify([]),ata_number:''}).select().single();
+  if(error)throw error;
+  shooters.push({name:data.name,shell_notes:data.shell_notes||'',id:data.id});
+}
+async function dbUpdateShooterATA(name,ata_number){
+  const sh=shooters.find(s=>s.name===name);
+  if(sh)sh.ata_number=ata_number;
+  if(!USE_SB){localSave();return;}
+  await db.from('shooters').update({ata_number}).eq('name',name);
+}
+
+async function dbUpdateShooterLoadouts(name,loadouts){
+  const sh=shooters.find(s=>s.name===name);
+  if(sh)sh.shell_loadouts=loadouts;
+  if(!USE_SB){localSave();return;}
+  await db.from('shooters').update({shell_loadouts:JSON.stringify(loadouts)}).eq('name',name);
+}
+
+async function dbUpdateShooterNotes(name,shell_notes){
+  const sh=shooters.find(s=>s.name===name);
+  if(sh)sh.shell_notes=shell_notes;
+  if(!USE_SB){localSave();return;}
+  await db.from('shooters').update({shell_notes}).eq('name',name);
+}
+
+async function dbInsertEvent(row){
+  if(!USE_SB){row.id=uid();events.push(row);localSave();return row;}
+  const {data,error}=await db.from('events').insert(row).select().single();
+  if(error)throw error;events.push({...data,tournamentId:data.tournament_id});return data;
+}
+async function dbInsertTournament(row){
+  if(!USE_SB){row.id=uid();tournaments.push(row);localSave();return row;}
+  const {data,error}=await db.from('tournaments').insert(row).select().single();
+  if(error)throw error;tournaments.push(data);return data;
+}
+async function dbDelete(table,id){
+  if(!USE_SB){localSave();return;}
+  await db.from(table).delete().eq('id',id);
+}
+async function dbUpdate(table,id,updates){
+  if(!USE_SB){localSave();return;}
+  await db.from(table).update(updates).eq('id',id);
+}
+
+
+function switchView(name,btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  else document.getElementById('nav-'+name).classList.add('active');
+  if(name==='dash')renderDash();
+  if(name==='scorer')initScorerSetup();
+  if(name==='field')initFieldSetup();
+  if(name==='club'){renderShootersList();renderMoreEvents();renderCharts();populateChartSelects();}
+  if(name==='profile')renderProfileView();
+  if(name==='session')initSessionView();
+  if(name==='more'){renderShootersList();renderMoreEvents();renderCharts();populateChartSelects();}
+}
+
+
+function openSub(title,backLabel,contentFn){
+  document.getElementById('sub-title').textContent=title;
+  document.getElementById('sub-back-label').textContent=backLabel||'Back';
+  document.getElementById('sub-content').innerHTML='';
+  document.getElementById('sub-view').classList.add('open');
+  contentFn(document.getElementById('sub-content'));
+}
+function closeSub(){document.getElementById('sub-view').classList.remove('open');}
+
+
+function openModal(type,opts){
+  document.getElementById('modal-bg').classList.add('open');
+  const s=document.getElementById('modal-sheet');
+  if(type==='round')s.innerHTML=roundModalHTML(opts||{});
+  if(type==='event')s.innerHTML=eventModalHTML(opts||{});
+  if(type==='tournament')s.innerHTML=tournamentModalHTML();
+  if(type==='gun')s.innerHTML=gunModalHTML(opts?.editGun||null);
+}
+function closeModal(){document.getElementById('modal-bg').classList.remove('open');}
+
+
+function roundModalHTML(opts){
+  const shOpts=shooters.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
+  const evOpts=events.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  return `<div class="modal-handle"></div>
+    <div class="modal-title">Add round</div>
+    <div class="fi"><label>Shooter</label><select id="rm-sh" onchange="rmUpdateLoadouts()">${shOpts}</select></div>
+    <div class="fi"><label>Date</label><input type="date" id="rm-date" value="${opts.date||today()}"></div>
+    <div class="fi"><label>Format</label>
+      <div class="seg" style="grid-template-columns:repeat(3,1fr)" id="rm-fmt-seg">
+        <button class="active" onclick="setRMFmt('Singles',this)">Singles</button>
+        <button onclick="setRMFmt('Handicap',this)">Handicap</button>
+        <button onclick="setRMFmt('Doubles',this)">Doubles</button>
+      </div>
+    </div>
+    <div class="fi" id="rm-ydg" style="display:none">
+      <label>Yardage <span style="color:var(--red);font-size:11px">required</span></label>
+      <input type="number" id="rm-yd" min="19" max="27" placeholder="19-27 yards" style="font-size:16px;font-weight:600">
+    </div>
+    <div class="fi" id="rm-loadout-fi" style="display:none">
+      <label>Shell loadout</label>
+      <select id="rm-loadout"><option value="">-- none selected --</option></select>
+    </div>
+    <div class="fi"><label>Event</label><select id="rm-evt"><option value="">-- none --</option>${evOpts}</select></div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.03em">Hits per station (of <span id="rm-mx-lbl">5</span>)</p>
+    <div class="stn-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:1rem">
+      ${[1,2,3,4,5].map(i=>`<div style="text-align:center"><div style="font-size:11px;color:var(--text2);margin-bottom:4px;font-weight:600">S${i}</div><input type="number" id="rm-s${i}" min="0" max="5" style="text-align:center;font-size:18px;font-weight:700;padding:10px 4px" oninput="rmUpdTotal()"></div>`).join('')}
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
+      <div><div style="font-size:28px;font-weight:800" id="rm-tot">--</div><div style="font-size:12px;color:var(--text2)">of <span id="rm-mx">25</span></div></div>
+      <div style="font-size:14px;color:var(--text2)" id="rm-pct"></div>
+    </div>
+    <button class="btn btn-primary" onclick="saveRoundModal()"><i class="ti ti-device-floppy"></i> Save round</button>
+    <div style="height:.5rem"></div>
+    <button class="btn btn-secondary" style="width:100%" onclick="closeModal()">Cancel</button>`;
+}
+function setRMFmt(fmt,btn){
+  document.querySelectorAll('#rm-fmt-seg button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const mx=maxPerStn(fmt);
+  for(let i=1;i<=5;i++){const el=document.getElementById('rm-s'+i);if(el){el.max=mx;if(parseInt(el.value)>mx)el.value=mx;}}
+  document.getElementById('rm-mx-lbl').textContent=mx;
+  document.getElementById('rm-mx').textContent=maxTotal(fmt);
+  const yg=document.getElementById('rm-ydg');if(yg)yg.style.display=fmt==='Handicap'?'block':'none';
+  rmUpdateLoadouts();
+  rmUpdTotal();
+}
+
+function rmUpdateLoadouts(){
+  const sh=document.getElementById('rm-sh')?.value;
+  const fmt=document.querySelector('#rm-fmt-seg button.active')?.textContent||'Singles';
+  const shooterObj=shooters.find(s=>s.name===sh);
+  const loadouts=(shooterObj?.shell_loadouts||[]);
+  const lfi=document.getElementById('rm-loadout-fi');
+  const lsel=document.getElementById('rm-loadout');
+  if(!lfi||!lsel)return;
+  if(loadouts.length===0){lfi.style.display='none';return;}
+  lfi.style.display='block';
+  lsel.innerHTML='<option value="">-- none selected --</option>'+
+    loadouts.map((l,i)=>`<option value="${i}">${l.name}${l.details?' -- '+l.details:''}</option>`).join('');
+}
+function rmUpdTotal(){
+  const fmt=document.querySelector('#rm-fmt-seg button.active')?.textContent||'Singles';
+  const mx=maxPerStn(fmt);let sum=0,ok=true;
+  for(let i=1;i<=5;i++){const v=parseInt(document.getElementById('rm-s'+i)?.value);if(isNaN(v))ok=false;else sum+=Math.min(v,mx);}
+  const totEl=document.getElementById('rm-tot');const pctEl=document.getElementById('rm-pct');
+  if(totEl)totEl.textContent=ok?sum:'--';
+  if(pctEl)pctEl.textContent=ok?Math.round(sum/maxTotal(fmt)*100)+'%':'';
+}
+async function saveRoundModal(){
+  const fmt=document.querySelector('#rm-fmt-seg button.active')?.textContent||'Singles';
+  const mx=maxPerStn(fmt);
+  const sh=document.getElementById('rm-sh')?.value;
+  const date=document.getElementById('rm-date')?.value;
+  const eid=document.getElementById('rm-evt')?.value||null;
+  const stn=[];let ok=true;
+  for(let i=1;i<=5;i++){const v=parseInt(document.getElementById('rm-s'+i)?.value);if(isNaN(v)||v<0||v>mx)ok=false;else stn.push(v);}
+  if(!sh||!date||!ok){alert('Fill all 5 station scores (0--'+mx+').');return;}
+  let yd=null;
+  if(fmt==='Handicap'){
+    yd=parseInt(document.getElementById('rm-yd')?.value);
+    if(!yd||yd<19||yd>27){alert('Enter your yardage (19-27) for handicap rounds.');return;}
+  }
+  const loadoutIdx=document.getElementById('rm-loadout')?.value;
+  const shooterObj=shooters.find(s=>s.name===sh);
+  const loadout=loadoutIdx!==''&&loadoutIdx!=null&&shooterObj?.shell_loadouts?.[loadoutIdx]
+    ?shooterObj.shell_loadouts[parseInt(loadoutIdx)].name+(shooterObj.shell_loadouts[parseInt(loadoutIdx)].details?' -- '+shooterObj.shell_loadouts[parseInt(loadoutIdx)].details:'')
+    :null;
+  const sessionId=activeSession?.id||null;
+  try{await dbInsertRound({shooter:sh,date,format:fmt,stations:stn,total:stn.reduce((a,b)=>a+b,0),yardage:yd,shell_loadout:loadout,event_id:eid,session_id:sessionId});}
+  catch(e){alert('Save failed: '+e.message);return;}
+  closeModal();renderDash();
+  if(activeSession){renderSessionActive();switchView('session',document.getElementById('nav-session'));}
+  toast('Round saved');
+}
+
+
+function eventModalHTML(opts){
+  const tourOpts=tournaments.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  return `<div class="modal-handle"></div>
+    <div class="modal-title">New event / day</div>
+    <div class="fi"><label>Name</label><input type="text" id="em-name" placeholder="e.g. The Grand Day 1"></div>
+    <div class="fi"><label>Date</label><input type="date" id="em-date" value="${opts.date||today()}"></div>
+    <div class="fi"><label>Format</label><select id="em-fmt"><option value="">Any</option><option>Singles</option><option>Handicap</option><option>Doubles</option></select></div>
+    <div class="fi"><label>Tournament</label><select id="em-tour"><option value="">-- standalone --</option>${tourOpts}</select></div>
+    <div class="fi"><label>Notes</label><input type="text" id="em-notes" placeholder="Optional..."></div>
+    <button class="btn btn-primary" onclick="saveEvent()"><i class="ti ti-check"></i> Create</button>
+    <div style="height:.5rem"></div>
+    <button class="btn btn-secondary" style="width:100%" onclick="closeModal()">Cancel</button>`;
+}
+async function saveEvent(){
+  const name=document.getElementById('em-name')?.value.trim();
+  const date=document.getElementById('em-date')?.value;
+  if(!name||!date){alert('Name and date required.');return;}
+  const tid=document.getElementById('em-tour')?.value||null;
+  try{await dbInsertEvent({name,date,format:document.getElementById('em-fmt')?.value,notes:document.getElementById('em-notes')?.value.trim(),tournament_id:tid,tournamentId:tid});}
+  catch(e){alert('Failed: '+e.message);return;}
+  closeModal();populateEventSelects();renderMoreEvents();renderDash();toast('Event created');
+}
+function tournamentModalHTML(){
+  return `<div class="modal-handle"></div>
+    <div class="modal-title">New tournament</div>
+    <div class="fi"><label>Name</label><input type="text" id="tm-name" placeholder="e.g. The Grand American Trap Shoot"></div>
+    <div class="fi"><label>Start date</label><input type="date" id="tm-start" value="${today()}"></div>
+    <div class="fi"><label>End date</label><input type="date" id="tm-end"></div>
+    <div class="fi"><label>Location</label><input type="text" id="tm-loc" placeholder="e.g. Vandalia, OH"></div>
+    <div class="fi"><label>Notes</label><input type="text" id="tm-notes" placeholder="Optional..."></div>
+    <button class="btn btn-primary" onclick="saveTournament()"><i class="ti ti-check"></i> Create</button>
+    <div style="height:.5rem"></div>
+    <button class="btn btn-secondary" style="width:100%" onclick="closeModal()">Cancel</button>`;
+}
+async function saveTournament(){
+  const name=document.getElementById('tm-name')?.value.trim();
+  const start=document.getElementById('tm-start')?.value;
+  if(!name||!start){alert('Name and start date required.');return;}
+  try{await dbInsertTournament({name,start_date:start,start,end_date:document.getElementById('tm-end')?.value,end:document.getElementById('tm-end')?.value,location:document.getElementById('tm-loc')?.value.trim(),notes:document.getElementById('tm-notes')?.value.trim()});}
+  catch(e){alert('Failed: '+e.message);return;}
+  closeModal();renderMoreEvents();toast('Tournament created');
+}
+
+
+function populateEventSelects(){
+  const opts='<option value="">-- no event --</option>'+events.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  ['scorer-event','field-event'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+  const dOpts='<option value="">All events</option>'+events.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  const de=document.getElementById('d-evt');if(de)de.innerHTML=dOpts;
+}
+function populateChartSelects(){
+  const shOpts='<option value="">All shooters</option>'+shooters.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
+  const el=document.getElementById('ch-shooter');if(el)el.innerHTML=shOpts;
+}
+
+
+function today(){return new Date().toISOString().split('T')[0];}
+
+function renderDash(){
+  const fmt=document.getElementById('d-fmt')?.value||'';
+  const evtId=document.getElementById('d-evt')?.value||'';
+  let data=rounds.filter(r=>(!fmt||r.format===fmt)&&(!evtId||(r.event_id||r.eventId)===evtId));
+
+  // stat cards
+  const n=data.length,avg=n?(data.reduce((a,r)=>a+r.total,0)/n).toFixed(1):0,high=n?Math.max(...data.map(r=>r.total)):0,sh=new Set(data.map(r=>r.shooter)).size;
+  document.getElementById('d-stats').innerHTML=`
+    <div class="stat-card"><div class="sl">Rounds</div><div class="sv">${n}</div></div>
+    <div class="stat-card"><div class="sl">Shooters</div><div class="sv">${sh}</div></div>
+    <div class="stat-card"><div class="sl">Club avg</div><div class="sv">${avg}</div></div>
+    <div class="stat-card"><div class="sl">Club high</div><div class="sv">${high||'--'}</div></div>`;
+
+  // recent rounds
+  const recent=[...data].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15);
+  const rb=document.getElementById('d-rounds');
+  if(!recent.length){rb.innerHTML='<div class="empty">No rounds yet</div>';return;}
+  rb.innerHTML=recent.map(r=>{const mx=maxTotal(r.format);const pct=Math.round(r.total/mx*100);const eid=r.event_id||r.eventId;return `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div class="avatar" style="width:34px;height:34px;font-size:11px">${initials(r.shooter)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px">${r.shooter}${ataBadge(r.shooter)}</div>
+        <div style="font-size:12px;color:var(--text2)">${r.date}${r.yardage?' &middot; '+r.yardage+'yd':''}${r.shell_loadout?' &middot; '+r.shell_loadout:''}${eid?' &middot; '+evName(eid):''}</div>
+      </div>
+      ${fmtBadge(r.format)}
+      <div style="text-align:right">
+        <div style="font-size:18px;font-weight:800">${r.total}</div>
+        <div style="font-size:11px;color:var(--text3)">${pct}%</div>
+      </div>
+    </div>`;}).join('');
+
+  // station averages
+  const stnT=[0,0,0,0,0],stnC=[0,0,0,0,0];
+  data.forEach(r=>{r.stations.forEach((s,i)=>{stnT[i]+=s;stnC[i]++;});});
+  const mxP=fmt==='Doubles'?10:5;
+  document.getElementById('d-stn-avgs').innerHTML=[0,1,2,3,4].map(i=>{
+    const avg2=stnC[i]?(stnT[i]/stnC[i]).toFixed(1):'--';
+    const pct=stnC[i]?Math.round((stnT[i]/stnC[i])/mxP*100):0;
+    return `<div class="stn-avg-card" onclick="openStationDetail(${i})">
+      <div class="san">Stn ${i+1}</div>
+      <div class="sav">${avg2}</div>
+      <div class="spct">${pct}%</div>
+      <div class="stn-bar"><div class="stn-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;}).join('');
+
+  // events/tournaments condensed
+  renderDashEvents();
+  populateEventSelects();
+  renderSessionFeed();
+  updateActiveSessionBanner();
+}
+
+function renderDashEvents(){
+  const el=document.getElementById('d-events');if(!el)return;
+  const html=[];
+  tournaments.forEach(t=>{
+    const days=eventsForTournament(t.id).sort((a,b)=>a.date.localeCompare(b.date));
+    const ts=statsFor(roundsForTournament(t.id));
+    const s=t.start||t.start_date||'',e2=t.end||t.end_date||'';
+    html.push(`<div class="tour-card">
+      <div class="tour-hdr" onclick="toggleSection('dt-${t.id}',this)">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px">${t.name}</div>
+          <div style="font-size:12px;color:var(--text2)">${s}${e2?' -- '+e2:''} &middot; ${days.length} days</div>
+        </div>
+        <div style="text-align:right;margin-right:8px"><div style="font-size:14px;font-weight:700">${ts.n} rds</div><div style="font-size:12px;color:var(--text2)">avg ${ts.avg}</div></div>
+        <i class="ti ti-chevron-down chev"></i>
+      </div>
+      <div class="tour-body" id="dt-${t.id}">
+        ${days.map(ev=>{const es=statsFor(roundsForEvent(ev.id));return `<div class="day-row">
+          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">${ev.name}</div><div style="font-size:11px;color:var(--text2)">${ev.date}</div></div>
+          <div style="text-align:right;margin-right:8px"><div style="font-weight:700">${es.n} rds</div><div style="font-size:11px;color:var(--text2)">avg ${es.avg} &middot; high ${es.high}</div></div>
+          <button class="btn btn-secondary btn-sm" onclick="openModal('round',{eventId:'${ev.id}',date:'${ev.date}'})"><i class="ti ti-plus"></i></button>
+        </div>`;}).join('')}
+      </div>
+    </div>`);
+  });
+  standaloneEvents().sort((a,b)=>b.date.localeCompare(a.date)).forEach(ev=>{
+    const es=statsFor(roundsForEvent(ev.id));
+    html.push(`<div class="card" style="display:flex;align-items:center;gap:8px;padding:.75rem 1rem;margin-bottom:.5rem">
+      <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px">${ev.name}</div><div style="font-size:12px;color:var(--text2)">${ev.date}</div></div>
+      <div style="text-align:right;margin-right:8px"><div style="font-weight:700">${es.n} rds</div><div style="font-size:11px;color:var(--text2)">avg ${es.avg}</div></div>
+      <button class="btn btn-secondary btn-sm" onclick="openModal('round',{eventId:'${ev.id}',date:'${ev.date}'})"><i class="ti ti-plus"></i></button>
+    </div>`);
+  });
+  el.innerHTML=html.join('')||'';
+}
+
+function toggleSection(id,hdr){
+  const body=document.getElementById(id);if(!body)return;
+  const open=body.classList.toggle('open');
+  const ch=hdr.querySelector('.chev');if(ch)ch.classList.toggle('open',open);
+}
+
+function openStationDetail(idx){
+  openSub('Station '+(idx+1),'Home',el=>{
+    const data=rounds;
+    const shots=data.map(r=>({shooter:r.shooter,date:r.date,format:r.format,val:r.stations[idx],eventName:evName(r.event_id||r.eventId)})).sort((a,b)=>b.date.localeCompare(a.date));
+    const avg=shots.length?(shots.reduce((a,s)=>a+s.val,0)/shots.length).toFixed(2):'--';
+    const high=shots.length?Math.max(...shots.map(s=>s.val)):'--';
+    el.innerHTML=`
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1rem">
+        <div class="stat-card"><div class="sl">Shots</div><div class="sv" style="font-size:20px">${shots.length}</div></div>
+        <div class="stat-card"><div class="sl">Avg</div><div class="sv" style="font-size:20px">${avg}</div></div>
+        <div class="stat-card"><div class="sl">Best</div><div class="sv" style="font-size:20px">${high}</div></div>
+      </div>
+      <div class="card" style="padding:.5rem"><table class="tbl">
+        <thead><tr><th>Date</th><th>Shooter</th><th>Format</th><th style="text-align:right">Score</th></tr></thead>
+        <tbody>${shots.map(s=>`<tr>
+          <td style="color:var(--text2)">${s.date}</td><td style="font-weight:600">${s.shooter}</td>
+          <td>${fmtBadge(s.format)}</td>
+          <td style="text-align:right;font-weight:700">${s.val}/5</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+  });
+}
+
+
+async function saveATA(name){
+  const input=document.getElementById('ata-input');
+  if(!input)return;
+  const val=input.value.trim();
+  await dbUpdateShooterATA(name,val);
+  toast('ATA number saved');
+  openProfile(name);
+}
+
+async function addLoadout(name){
+  const lnEl=document.getElementById('new-loadout-name-'+name);
+  const ldEl=document.getElementById('new-loadout-details-'+name);
+  if(!lnEl||!ldEl)return;
+  const lname=lnEl.value.trim(), ldetails=ldEl.value.trim();
+  if(!lname){toast('Enter a label (e.g. Singles)');return;}
+  const sh=shooters.find(s=>s.name===name);
+  if(!sh)return;
+  const loadouts=[...(sh.shell_loadouts||[]),{name:lname,details:ldetails}];
+  await dbUpdateShooterLoadouts(name,loadouts);
+  lnEl.value='';ldEl.value='';
+  toast('Loadout saved');
+  // re-open profile to refresh
+  openProfile(name);
+}
+
+async function deleteLoadout(name,idx){
+  const sh=shooters.find(s=>s.name===name);
+  if(!sh)return;
+  const loadouts=(sh.shell_loadouts||[]).filter((_,i)=>i!==idx);
+  await dbUpdateShooterLoadouts(name,loadouts);
+  toast('Loadout removed');
+  openProfile(name);
+}
+
+async function saveShellNotes(name){
+  const input=document.getElementById('shell-notes-input');
+  if(!input)return;
+  await dbUpdateShooterNotes(name,input.value.trim());
+  toast('Shell notes saved');
+  renderShootersList();
+}
+
+function openProfile(name){
+  const _sh=shooters.find(s=>s.name===name);
+  const _ataLabel=_sh&&_sh.ata_number?' #'+_sh.ata_number:'';
+  openSub(name+_ataLabel,'More',el=>{
+    const rs=rounds.filter(r=>r.shooter===name);
+    const byFmt={Singles:rs.filter(r=>r.format==='Singles'),Handicap:rs.filter(r=>r.format==='Handicap'),Doubles:rs.filter(r=>r.format==='Doubles')};
+    const af=arr=>arr.length?(arr.reduce((a,r)=>a+r.total,0)/arr.length).toFixed(1):'--';
+    const hf=arr=>arr.length?Math.max(...arr.map(r=>r.total)):'--';
+    const stnT=[0,0,0,0,0],stnC=[0,0,0,0,0];
+    rs.forEach(r=>{r.stations.forEach((s,i)=>{stnT[i]+=s;stnC[i]++;});});
+    const recent=[...rs].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,12);
+    const shooterObj=shooters.find(s=>s.name===name)||{name,shell_notes:'',shell_loadouts:[],ata_number:''};
+    const sf2=safeStr(name);
+    el.innerHTML=`
+      <div class="card">
+        <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+          ${['Singles','Handicap','Doubles'].map(f=>`<div class="stat-card"><div class="sl">${f}</div><div style="font-size:16px;font-weight:700;margin-top:4px">${af(byFmt[f])}</div><div style="font-size:11px;color:var(--text2)">Hi ${hf(byFmt[f])}</div></div>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Per-station averages</div>
+        <div class="stn-avg-grid">${[0,1,2,3,4].map(i=>{
+          const a2=stnC[i]?(stnT[i]/stnC[i]).toFixed(1):'--';
+          const p=stnC[i]?Math.round((stnT[i]/stnC[i])/5*100):0;
+          return `<div class="stn-avg-card">
+            <div class="san">Stn ${i+1}</div><div class="sav">${a2}</div><div class="spct">${p}%</div>
+            <div class="stn-bar"><div class="stn-bar-fill" style="width:${p}%"></div></div>
+          </div>`;}).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Recent rounds</div>
+        ${recent.map(r=>{const mx=maxTotal(r.format);const pct=Math.round(r.total/mx*100);return `
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:12px;color:var(--text2);width:68px">${r.date}</span>
+            ${fmtBadge(r.format)}
+            <div style="flex:1;background:var(--bg2);border-radius:3px;height:5px"><div style="width:${pct}%;background:var(--blue);height:5px;border-radius:3px"></div></div>
+            <span style="font-weight:700;min-width:40px;text-align:right">${r.total}/${mx}</span>
+          </div>`;}).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">Score trend</div>
+        <div style="position:relative;width:100%;height:200px"><canvas id="profile-chart" role="img" aria-label="Score trend">Trend.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">ATA number</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="ata-input" value="${shooterObj.ata_number||''}" placeholder="e.g. 123456" style="flex:1;font-size:16px;font-weight:600;padding:10px 12px;letter-spacing:.05em">
+          <button class="btn btn-secondary btn-sm" onclick="saveATA('${sf2}')">Save</button>
+        </div>
+        ${shooterObj.ata_number?`<div style="font-size:12px;color:var(--text2);margin-top:6px">ATA # ${shooterObj.ata_number}</div>`:'<div style="font-size:12px;color:var(--text3);margin-top:6px">No ATA number on file</div>'}
+      </div>
+      <div class="card">
+        <div class="card-title">Shell loadouts</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:.75rem">Save named shell configs. You will pick one before each round.</p>
+        <div id="loadout-list-${sf2}">
+          ${(shooterObj.shell_loadouts||[]).map((l,i)=>`
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <div style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:9px 12px;font-size:14px">${l.name}${l.details?' <span style="color:var(--text2);font-size:12px">-- '+l.details+'</span>':''}</div>
+              <button class="btn btn-danger btn-sm" onclick="deleteLoadout('${sf2}',${i})"><i class="ti ti-trash"></i></button>
+            </div>`).join('')}
+          ${(shooterObj.shell_loadouts||[]).length===0?'<div style="font-size:13px;color:var(--text3);margin-bottom:.75rem">No loadouts yet</div>':''}
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <input type="text" id="new-loadout-name-${sf2}" placeholder="Label (e.g. Singles)" style="flex:1;font-size:14px;padding:9px 10px">
+          <input type="text" id="new-loadout-details-${sf2}" placeholder="Details (e.g. Rem Gun Club 7.5)" style="flex:2;font-size:14px;padding:9px 10px">
+        </div>
+        <button class="btn btn-secondary btn-sm" style="width:100%" onclick="addLoadout('${sf2}')"><i class="ti ti-plus"></i> Add loadout</button>
+      </div>`;
+    setTimeout(()=>{
+      const cv=document.getElementById('profile-chart');if(!cv)return;
+      const sorted=[...rs].sort((a,b)=>a.date.localeCompare(b.date)).slice(-20);
+      if(sorted.length<2)return;
+      new Chart(cv,{type:'line',data:{labels:sorted.map(r=>r.date.slice(5)),datasets:[{label:'Score',data:sorted.map(r=>r.total),borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,0.07)',tension:.3,pointRadius:3,borderWidth:2,pointBackgroundColor:'#378ADD'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,ticks:{font:{size:11}},grid:{color:'rgba(128,128,128,0.1)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}});
+    },60);
+  });
+}
+
+
+function renderShootersList(){
+  const el=document.getElementById('m-shooters-list');if(!el)return;
+  if(!shooters.length){el.innerHTML='<div class="empty">No shooters yet</div>';return;}
+  el.innerHTML=shooters.map(s=>{
+    const cnt=rounds.filter(r=>r.shooter===s.name).length;
+    const sf=safeStr(s.name);
+    return `<div class="row-between" style="padding:10px 4px;border-bottom:1px solid var(--border)">
+      <div class="row" style="gap:10px;cursor:pointer;flex:1;min-width:0" onclick="openProfile('${sf}')">
+        <div class="avatar" style="width:36px;height:36px;font-size:13px">${initials(s.name)}</div>
+        <div style="min-width:0">
+          <div style="font-weight:600;font-size:14px">${s.name}${ataBadge(s.name)}</div>
+          <div style="font-size:12px;color:var(--text2)">${cnt} round${cnt!==1?'s':''}${s.shell_notes?' &middot; '+s.shell_notes:''}</div>
+        </div>
+      </div>
+      <div class="row" style="gap:6px;flex-shrink:0">
+        <button class="btn btn-secondary btn-sm" onclick="openProfile('${sf}')"><i class="ti ti-chart-line"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="removeShooter('${sf}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function addShooter(){
+  const name=document.getElementById('m-new-name')?.value.trim();
+  const cls=document.getElementById('m-new-cls')?.value;
+  if(!name)return;
+  const full=cls?`${name} (${cls})`:name;
+  if(shooters.find(s=>s.name===full)){toast('Already exists');return;}
+  try{await dbInsertShooter(full);}catch(e){alert('Failed: '+e.message);return;}
+  document.getElementById('m-new-name').value='';
+  renderShootersList();populateScorerSlots();toast('Shooter added');
+}
+async function removeShooter(name){
+  if(!confirm(`Remove "${name}"?`))return;
+  if(USE_SB){try{const{data}=await db.from('shooters').select('id').eq('name',name).single();if(data)await dbDelete('shooters',data.id);}catch(e){}}
+  shooters=shooters.filter(s=>s.name!==name);
+  if(!USE_SB)localSave();
+  renderShootersList();populateSelects();toast('Removed');
+}
+
+
+function renderMoreEvents(){
+  const el=document.getElementById('m-events-list');if(!el)return;
+  const html=[];
+  tournaments.forEach(t=>{
+    const days=eventsForTournament(t.id).sort((a,b)=>a.date.localeCompare(b.date));
+    const ts=statsFor(roundsForTournament(t.id));
+    html.push(`<div class="tour-card">
+      <div class="tour-hdr" onclick="toggleSection('mt-${t.id}',this)">
+        <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px">${t.name}</div><div style="font-size:12px;color:var(--text2)">${days.length} days &middot; ${ts.n} rounds</div></div>
+        <i class="ti ti-chevron-down chev"></i>
+        <button class="btn btn-danger btn-sm" style="margin-left:8px" onclick="event.stopPropagation();confirmDelTour('${t.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+      <div class="tour-body" id="mt-${t.id}">
+        <div style="padding:.75rem 1rem"><button class="btn btn-secondary btn-sm" onclick="openModal('event',{tournamentId:'${t.id}'})"><i class="ti ti-plus"></i> Add day</button></div>
+        ${days.map(ev=>{const es=statsFor(roundsForEvent(ev.id));return `<div class="day-row">
+          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">${ev.name}</div><div style="font-size:11px;color:var(--text2)">${ev.date} &middot; avg ${es.avg} &middot; hi ${es.high}</div></div>
+          <button class="btn btn-danger btn-sm" onclick="delEvent('${ev.id}')"><i class="ti ti-trash"></i></button>
+        </div>`;}).join('')}
+        ${ts.n>0?`<div style="padding:.75rem 1rem;background:var(--bg2)">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+            ${[['Rounds',ts.n],['Shooters',ts.shooters],['Avg',ts.avg],['High',ts.high]].map(([l,v])=>`<div class="stat-card" style="padding:.5rem .6rem"><div class="sl">${l}</div><div style="font-size:16px;font-weight:700;margin-top:2px">${v}</div></div>`).join('')}
+          </div>
+        </div>`:''}
+      </div>
+    </div>`);
+  });
+  standaloneEvents().sort((a,b)=>b.date.localeCompare(a.date)).forEach(ev=>{
+    const es=statsFor(roundsForEvent(ev.id));
+    html.push(`<div class="card" style="display:flex;align-items:center;gap:8px;padding:.75rem 1rem;margin-bottom:.5rem">
+      <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px">${ev.name}</div><div style="font-size:12px;color:var(--text2)">${ev.date} &middot; avg ${es.avg} &middot; hi ${es.high}</div></div>
+      <button class="btn btn-danger btn-sm" onclick="delEvent('${ev.id}')"><i class="ti ti-trash"></i></button>
+    </div>`);
+  });
+  el.innerHTML=html.join('')||'<div class="empty">No events yet</div>';
+}
+async function confirmDelTour(id){
+  const t=tournaments.find(x=>x.id===id);if(!t)return;
+  const days=eventsForTournament(id);const rs=roundsForTournament(id);
+  if(!confirm(`Delete "${t.name}"?\n${days.length} days, ${rs.length} rounds.\nDays become standalone events.`))return;
+  if(USE_SB){try{await Promise.all(days.map(e=>dbUpdate('events',e.id,{tournament_id:null})));await dbDelete('tournaments',id);}catch(e){alert('Failed: '+e.message);return;}}
+  events.forEach(e=>{if((e.tournament_id||e.tournamentId)===id){e.tournament_id=null;e.tournamentId=null;}});
+  tournaments=tournaments.filter(x=>x.id!==id);
+  if(!USE_SB)localSave();
+  renderMoreEvents();toast('Tournament deleted');
+}
+async function delEvent(id){
+  if(!confirm('Delete this event?'))return;
+  if(USE_SB){try{await dbDelete('events',id);}catch(e){alert('Failed: '+e.message);return;}}
+  rounds.forEach(r=>{if((r.event_id||r.eventId)===id){r.event_id=null;r.eventId=null;}});
+  events=events.filter(e=>e.id!==id);
+  if(!USE_SB)localSave();
+  renderMoreEvents();populateEventSelects();renderDash();toast('Event deleted');
+}
+
+
+function renderCharts(){
+  const sh=document.getElementById('ch-shooter')?.value||'';
+  const fmt=document.getElementById('ch-fmt')?.value||'';
+  const from=document.getElementById('ch-from')?.value||'';
+  const to=document.getElementById('ch-to')?.value||'';
+  let data=rounds.filter(r=>{
+    if(sh&&r.shooter!==sh)return false;
+    if(fmt&&r.format!==fmt)return false;
+    if(from&&r.date<from)return false;
+    if(to&&r.date>to)return false;
+    return true;
+  });
+  data=[...data].sort((a,b)=>a.date.localeCompare(b.date));
+  if(lineChart){lineChart.destroy();lineChart=null;}
+  if(barChart){barChart.destroy();barChart=null;}
+  const palette=['#378ADD','#1D9E75','#D85A30','#7F77DD','#D4537E','#BA7517'];
+  const lc=document.getElementById('ch-line');if(!lc)return;
+  if(data.length>1){
+    if(sh){
+      lineChart=new Chart(lc,{type:'line',data:{labels:data.map(r=>r.date.slice(5)),datasets:[{label:sh,data:data.map(r=>r.total),borderColor:palette[0],backgroundColor:'rgba(55,138,221,0.06)',tension:.3,pointRadius:3,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:10},maxTicksLimit:8}}}}});
+    } else {
+      const bySh={};data.forEach(r=>{if(!bySh[r.shooter])bySh[r.shooter]=[];bySh[r.shooter].push({d:r.date.slice(5),t:r.total});});
+      const allDates=[...new Set(data.map(r=>r.date.slice(5)))];
+      const keys=Object.keys(bySh).slice(0,6);
+      const datasets=keys.map((s,i)=>({label:s,data:allDates.map(d=>{const p=bySh[s].find(x=>x.d===d);return p?p.t:null;}),borderColor:palette[i%palette.length],backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:2,spanGaps:true}));
+      lineChart=new Chart(lc,{type:'line',data:{labels:allDates,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:8,padding:8}}},scales:{y:{min:0,grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:10},maxTicksLimit:6}}}}});
+    }
+  }
+  const byS={};data.forEach(r=>{if(!byS[r.shooter])byS[r.shooter]={sum:0,n:0};byS[r.shooter].sum+=r.total;byS[r.shooter].n++;});
+  const bLabels=Object.keys(byS),bData=bLabels.map(s=>parseFloat((byS[s].sum/byS[s].n).toFixed(1)));
+  const bh=Math.max(140,bLabels.length*40+70);
+  document.getElementById('ch-bar-wrap').style.height=bh+'px';
+  const bc=document.getElementById('ch-bar');if(!bc)return;
+  if(bLabels.length){barChart=new Chart(bc,{type:'bar',data:{labels:bLabels,datasets:[{label:'Avg',data:bData,backgroundColor:'#B5D4F4',borderColor:'#185FA5',borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{min:0,grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}}); }
+}
+
+
+
+// SCORER MODE
+// scorerShooters: [{name, startStation}]  startStation 0-4
+// scorerRotation: current rotation index 0-4
+// scorerShots[shooterIdx][rotationIdx][shotIdx] = 1|0|null
+
+let scorerFmt="Singles", scorerShooters=[], scorerShots=[], scorerRotation=0;
+
+function currentStationFor(si){
+  return (scorerShooters[si].startStation + scorerRotation) % 5;
+}
+
+function setScorerFmt(fmt,btn){
+  scorerFmt=fmt;
+  document.querySelectorAll("#scorer-fmt-seg button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("scorer-yd-fi").style.display="none"; // not used in new per-shooter mode
+  populateScorerSlots(); // re-render to show/hide yardage fields
+}
+
+function initScorerSetup(){
+  document.getElementById("scorer-setup").style.display="flex";
+  document.getElementById("scorer-live").style.display="none";
+  document.getElementById("scorer-done").style.display="none";
+  document.getElementById("scorer-date").value=today();
+  populateEventSelects();
+  populateScorerSlots();
+}
+
+function populateScorerSlots(){
+  const el=document.getElementById("scorer-slots");if(!el)return;
+  const shOpts=shooters.map(s=>`<option value="${s.name}">${s.name}</option>`).join("");
+  const stnOpts=[1,2,3,4,5].map(i=>`<option value="${i-1}">Stn ${i}</option>`).join("");
+  const isHandicap=scorerFmt==="Handicap";
+  el.innerHTML=[0,1,2,3,4].map(i=>`
+    <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="width:24px;height:24px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text2);flex-shrink:0">${i+1}</div>
+        <select id="sc-slot-${i}" style="flex:2;font-size:14px;padding:9px 10px" onchange="onScorerSlotChange(${i})">
+          <option value="">-- empty --</option>${shOpts}
+        </select>
+        <select id="sc-stn-${i}" style="flex:1;font-size:13px;padding:9px 8px">
+          ${stnOpts}
+        </select>
+      </div>
+      ${isHandicap?`<div style="display:flex;gap:8px;padding-left:32px;margin-bottom:4px;align-items:center">
+        <label style="font-size:12px;color:var(--text2);font-weight:600;white-space:nowrap">Yardage <span style="color:var(--red)">*</span></label>
+        <input type="number" id="sc-yd-${i}" min="19" max="27" placeholder="19-27" style="width:80px;font-size:15px;font-weight:700;padding:7px 10px;text-align:center">
+      </div>`:''}
+      <div style="padding-left:32px" id="sc-loadout-wrap-${i}">
+        <select id="sc-loadout-${i}" style="font-size:13px;padding:7px 10px;color:var(--text2)">
+          <option value="">-- no shell loadout --</option>
+        </select>
+      </div>
+    </div>`).join("");
+  for(let i=0;i<5;i++){
+    const s=document.getElementById("sc-stn-"+i);
+    if(s)s.value=String(i);
+    // hide loadout select until shooter is chosen
+    const lw=document.getElementById("sc-loadout-wrap-"+i);
+    if(lw)lw.style.display='none';
+  }
+}
+
+function onScorerSlotChange(i){
+  const name=document.getElementById("sc-slot-"+i)?.value;
+  const sh=shooters.find(s=>s.name===name);
+  const lw=document.getElementById("sc-loadout-wrap-"+i);
+  const lsel=document.getElementById("sc-loadout-"+i);
+  if(!lw||!lsel)return;
+  const loadouts=sh?.shell_loadouts||[];
+  if(!name||loadouts.length===0){lw.style.display='none';return;}
+  lw.style.display='block';
+  lsel.innerHTML='<option value="">-- no shell loadout --</option>'+
+    loadouts.map((l,j)=>`<option value="${j}">${l.name}${l.details?' -- '+l.details:''}</option>`).join('');
+}
+
+function addShooterFromScorer(){
+  const name=document.getElementById("scorer-new-name")?.value.trim();
+  if(!name)return;
+  if(!shooters.find(s=>s.name===name)){
+    dbInsertShooter(name,'').then(()=>populateScorerSlots()).catch(e=>alert(e.message));
+  }
+  document.getElementById("scorer-new-name").value="";
+}
+
+function startScorer(){
+  scorerShooters=[];
+  const isHandicap=scorerFmt==="Handicap";
+  for(let i=0;i<5;i++){
+    const name=document.getElementById("sc-slot-"+i)?.value;
+    const stn=parseInt(document.getElementById("sc-stn-"+i)?.value);
+    if(!name)continue;
+    let yd=null;
+    if(isHandicap){
+      yd=parseInt(document.getElementById("sc-yd-"+i)?.value);
+      if(!yd||yd<19||yd>27){alert(`Enter yardage (19-27) for ${name}.`);return;}
+    }
+    const loadoutIdx=document.getElementById("sc-loadout-"+i)?.value;
+    const sh=shooters.find(s=>s.name===name);
+    const loadout=loadoutIdx!==''&&loadoutIdx!=null&&sh?.shell_loadouts?.[parseInt(loadoutIdx)]
+      ?sh.shell_loadouts[parseInt(loadoutIdx)].name+(sh.shell_loadouts[parseInt(loadoutIdx)].details?' -- '+sh.shell_loadouts[parseInt(loadoutIdx)].details:'')
+      :null;
+    scorerShooters.push({name, startStation:isNaN(stn)?i:stn, yardage:yd, shell_loadout:loadout});
+  }
+  if(!scorerShooters.length){alert("Select at least one shooter.");return;}
+  const mxP=maxPerStn(scorerFmt);
+  scorerShots=scorerShooters.map(()=>Array(5).fill(null).map(()=>Array(mxP).fill(null)));
+  scorerRotation=0;
+  document.getElementById("scorer-setup").style.display="none";
+  document.getElementById("scorer-live").style.display="flex";
+  document.getElementById("scorer-done").style.display="none";
+  document.getElementById("scorer-format-badge").innerHTML=fmtBadge(scorerFmt);
+  renderScorerLive();
+}
+
+function scorerRunningTotal(si){
+  let sum=0;
+  for(let r=0;r<=scorerRotation;r++){
+    scorerShots[si][r].forEach(s=>{if(s===1)sum++;});
+  }
+  return sum;
+}
+
+function scorerStationTotal(si){
+  return scorerShots[si][scorerRotation].filter(s=>s===1).length;
+}
+
+function renderScorerLive(){
+  const mxP=maxPerStn(scorerFmt);
+
+  document.getElementById("scorer-rotation-label").textContent="Rotation "+(scorerRotation+1)+" of 5";
+
+  // station map
+  const mapEl=document.getElementById("scorer-station-map");
+  mapEl.innerHTML=`<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-right:2px">Now on:</span>
+    ${scorerShooters.map((sh,si)=>{
+      const stn=currentStationFor(si);
+      return `<div style="display:flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px 8px">
+        <span style="font-size:11px;font-weight:700;color:var(--blue)">S${stn+1}</span>
+        <span style="font-size:12px;font-weight:600">${sh.name.split(" ")[0]}</span>
+      </div>`;
+    }).join("")}
+  </div>`;
+
+  // scorecards
+  const cards=document.getElementById("scorer-scorecards");
+  cards.innerHTML=scorerShooters.map((sh,si)=>{
+    const stn=currentStationFor(si);
+    const shots=scorerShots[si][scorerRotation];
+    const stationHits=shots.filter(s=>s===1).length;
+    const running=scorerRunningTotal(si);
+    const shotBtns=shots.map((hit,j)=>{
+      if(hit===1)    return `<button class="shot-btn hit"  style="font-size:12px;font-weight:700" onclick="toggleScorerShot(${si},${scorerRotation},${j})">HIT</button>`;
+      if(hit===0)    return `<button class="shot-btn miss" style="font-size:12px;font-weight:700;opacity:.7" onclick="toggleScorerShot(${si},${scorerRotation},${j})">miss</button>`;
+      return `<button class="shot-btn" style="font-size:18px;border-style:dashed;color:var(--text3)" onclick="toggleScorerShot(${si},${scorerRotation},${j})">&#9675;</button>`;
+    }).join("");
+    return `<div class="shooter-scorecard" style="border-bottom:1px solid var(--border);padding:.75rem 1rem">
+      <div class="row-between" style="margin-bottom:.6rem">
+        <div class="row" style="gap:8px">
+          <div class="avatar" style="width:34px;height:34px;font-size:11px">${initials(sh.name)}</div>
+          <div>
+            <div style="font-weight:700;font-size:14px">${sh.name}</div>
+            <div style="font-size:11px;color:var(--text2)">Station ${stn+1} &middot; tap each bird you hit</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:22px;font-weight:800;line-height:1">${stationHits}<span style="font-size:13px;color:var(--text2);font-weight:500">/${mxP}</span></div>
+          <div style="font-size:11px;color:var(--blue);font-weight:600">Total: ${running}</div>
+        </div>
+      </div>
+      <div class="shot-row" style="flex-wrap:wrap;gap:6px">${shotBtns}</div>
+    </div>`;
+  }).join("");
+
+  // action bar
+  const actionBtn=document.getElementById("scorer-action-btn");
+  const hint=document.getElementById("scorer-station-hint");
+  const undoBtn=document.getElementById("scorer-undo-btn");
+  undoBtn.style.display=scorerRotation>0?"flex":"none";
+  const allLogged=true; // shots default to miss (0), always ready to rotate
+  const isLast=scorerRotation===4;
+  if(isLast){
+    actionBtn.innerHTML='<i class="ti ti-flag-check"></i> Finish round';
+    actionBtn.style.background="var(--green)";
+    actionBtn.style.color="#fff";
+    hint.textContent="All stations shot -- ready to finish";
+  } else {
+    actionBtn.innerHTML='Shooters rotate <i class="ti ti-refresh"></i>';
+    actionBtn.style.background="var(--blue)";
+    actionBtn.style.color="#fff";
+    hint.textContent="Tap birds you hit -- untapped = miss";
+  }
+}
+
+function toggleScorerShot(si,rot,j){
+  // tap to mark hit; tap again to unmark. Misses are automatic on rotation.
+  scorerShots[si][rot][j]=scorerShots[si][rot][j]===1?null:1;
+  if(navigator.vibrate)navigator.vibrate(8);
+  renderScorerLive();
+}
+
+function scorerAction(){
+  const allLogged=true; // shots default to miss (0), always ready to rotate
+  if(!allLogged){toast("Log all shots before rotating");return;}
+  if(scorerRotation===4){showScorerDone();}
+  else{scorerRotation++;renderScorerLive();toast("Rotated! Now on rotation "+(scorerRotation+1));}
+}
+
+function scorerUndo(){
+  if(scorerRotation===0)return;
+  scorerRotation--;
+  renderScorerLive();
+  toast("Back to rotation "+(scorerRotation+1));
+}
+
+function showScorerDone(){
+  // auto-fill any remaining nulls as misses
+  scorerShooters.forEach((_,si)=>{
+    for(let rot=0;rot<5;rot++){
+      scorerShots[si][rot]=scorerShots[si][rot].map(s=>s===null?0:s);
+    }
+  });
+  document.getElementById("scorer-live").style.display="none";
+  document.getElementById("scorer-done").style.display="flex";
+  const mxP=maxPerStn(scorerFmt);
+  const mx=maxTotal(scorerFmt);
+  const el=document.getElementById("scorer-summary");
+  el.innerHTML=`<div class="card" style="margin-bottom:1rem">
+    <div class="card-title">Round summary -- ${scorerFmt}</div>
+    ${scorerShooters.map((sh,si)=>{
+      const stationScores=Array(5).fill(0);
+      for(let rot=0;rot<5;rot++){
+        const stn=(sh.startStation+rot)%5;
+        stationScores[stn]=scorerShots[si][rot].filter(s=>s===1).length;
+      }
+      const total=stationScores.reduce((a,b)=>a+b,0);
+      const pct=Math.round(total/mx*100);
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div class="row-between" style="margin-bottom:6px">
+          <div class="row" style="gap:8px">
+            <div class="avatar" style="width:36px;height:36px;font-size:12px">${initials(sh.name)}</div>
+            <div style="font-weight:700;font-size:15px">${sh.name}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:26px;font-weight:800;line-height:1">${total}</div>
+            <div style="font-size:11px;color:var(--text3)">${pct}%</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px">
+          ${stationScores.map((hits,i)=>`
+            <div style="flex:1;background:var(--bg2);border-radius:6px;padding:5px 2px;text-align:center;border:1px solid var(--border)">
+              <div style="font-size:10px;color:var(--text2);font-weight:600">S${i+1}</div>
+              <div style="font-size:16px;font-weight:800">${hits}</div>
+            </div>`).join("")}
+          <div style="width:1px;background:var(--border);margin:0 2px"></div>
+          <div style="flex:1;background:var(--blue-bg);border-radius:6px;padding:5px 2px;text-align:center;border:1px solid var(--border)">
+            <div style="font-size:10px;color:var(--blue-text);font-weight:600">TOT</div>
+            <div style="font-size:16px;font-weight:800;color:var(--blue-text)">${total}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+async function saveScorer(){
+  const date=document.getElementById("scorer-date")?.value||today();
+  const eid=document.getElementById("scorer-event")?.value||null;
+  // yardage now per-shooter, stored in scorerShooters[si].yardage
+  try{
+    for(let si=0;si<scorerShooters.length;si++){
+      const sh=scorerShooters[si];
+      const stationScores=Array(5).fill(0);
+      for(let rot=0;rot<5;rot++){
+        const stn=(sh.startStation+rot)%5;
+        stationScores[stn]=scorerShots[si][rot].filter(s=>s===1).length;
+      }
+      const total=stationScores.reduce((a,b)=>a+b,0);
+      await dbInsertRound({shooter:sh.name,date,format:scorerFmt,stations:stationScores,total,yardage:sh.yardage||null,shell_loadout:sh.shell_loadout||null,event_id:eid});
+    }
+  }catch(e){alert("Save failed: "+e.message);return;}
+  toast("All rounds saved!");endScorer();switchView("dash",document.getElementById("nav-dash"));
+}
+
+function endScorer(){initScorerSetup();}
+
+
+// FIELD MODE
+
+function setFieldFmt(fmt,btn){
+  fieldFmt=fmt;
+  document.querySelectorAll('#field-fmt-seg button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const yw=document.getElementById('field-yd-wrap');
+  if(yw)yw.style.display=fmt==='Handicap'?'block':'none';
+}
+
+function initFieldSetup(){
+  document.getElementById('field-setup').style.display='flex';
+  document.getElementById('field-live').style.display='none';
+  document.getElementById('field-date').value=today();
+  populateEventSelects();
+  // shooter select
+  const sel=document.getElementById('field-shooter');
+  if(sel)sel.innerHTML=shooters.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
+  // start station buttons
+  const sg=document.getElementById('field-start-stns');
+  if(sg)sg.innerHTML=[1,2,3,4,5].map(i=>`<button class="stn-pick ${i===1?'selected':''}" onclick="selectFieldStartStn(${i-1},this)">${i}</button>`).join('');
+  fieldStartStn=0;
+}
+
+function selectFieldStartStn(idx,btn){
+  fieldStartStn=idx;
+  document.querySelectorAll('.stn-pick').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function onFieldShooterChange(){
+  const sel=document.getElementById('field-shooter');
+  if(!sel)return;
+  const sh=shooters.find(s=>s.name===sel.value);
+  const lw=document.getElementById('field-loadout-wrap');
+  const lsel=document.getElementById('field-loadout');
+  if(!lw||!lsel)return;
+  const loadouts=sh?.shell_loadouts||[];
+  if(loadouts.length===0){lw.style.display='none';return;}
+  lw.style.display='block';
+  lsel.innerHTML='<option value="">-- no shell loadout --</option>'+
+    loadouts.map((l,i)=>`<option value="${i}">${l.name}${l.details?' -- '+l.details:''}</option>`).join('');
+}
+
+function startField(){
+  const sh=document.getElementById('field-shooter')?.value;
+  if(!sh){alert('Select a shooter.');return;}
+  if(fieldFmt==='Handicap'){
+    const yd=parseInt(document.getElementById('field-yd')?.value);
+    if(!yd||yd<19||yd>27){alert('Enter your yardage (19-27) for handicap rounds.');return;}
+  }
+  const mxP=maxPerStn(fieldFmt);
+  fieldCurStn=fieldStartStn;
+  fieldShots=Array(5).fill(null).map(()=>Array(mxP).fill(0));
+  document.getElementById('field-setup').style.display='none';
+  document.getElementById('field-live').style.display='flex';
+  document.getElementById('fl-shooter-name').textContent=sh;
+  document.getElementById('fl-fmt-badge').innerHTML=fmtBadge(fieldFmt);
+  document.getElementById('fl-done-banner').classList.remove('show');
+  document.getElementById('fl-save-btn').style.display='none';
+  renderFieldLive();
+}
+
+function renderFieldLive(){
+  const mxP=maxPerStn(fieldFmt);
+  const totalShots=fieldShots.flat().reduce((a,b)=>a+b,0);
+  const mx=maxTotal(fieldFmt);
+  document.getElementById('fl-stn-label').textContent=`Station ${fieldCurStn+1} of 5`;
+  document.getElementById('fl-total').textContent=totalShots;
+  document.getElementById('fl-total-sub').textContent=`of ${mx}`;
+
+  // progress bar -- ordered from fieldStartStn
+  const order=[];for(let i=0;i<5;i++)order.push((fieldStartStn+i)%5);
+  const progressEl=document.getElementById('fl-progress');
+  progressEl.innerHTML=order.map(i=>{
+    const done=fieldShots[i].reduce((a,b)=>a+b,0)===mxP;
+    const active=i===fieldCurStn;
+    return `<div class="fp-seg ${done?'done':active?'active':''}"></div>`;
+  }).join('');
+
+  // shot buttons for current station
+  const stationShots=fieldShots[fieldCurStn];
+  const shotGrid=document.getElementById('fl-shots');
+  shotGrid.innerHTML=stationShots.map((hit,j)=>`<button class="field-shot-btn ${hit===1?'hit':'miss'}" onclick="toggleFieldShot(${j})">${hit===1?'X':'O'}</button>`).join('');
+
+  // check if current station is complete
+  const stationDone=stationShots.every(s=>s===1)||stationShots.reduce((a,b)=>a+b,0)===mxP;
+  // (station done when all shots recorded -- user picks hits, rest counted as misses by advancing)
+  const advEl=document.getElementById('fl-advance');
+  const advBtn=document.getElementById('fl-advance-btn');
+  const advLabel=document.getElementById('fl-advance-label');
+
+  // determine next station in rotation
+  const orderIdx=order.indexOf(fieldCurStn);
+  const isLastStn=orderIdx===4;
+
+  if(isLastStn){
+    advLabel.textContent='All stations done!';
+    advBtn.textContent='Review & save';
+    advEl.classList.add('show');
+  } else {
+    const nextStn=order[orderIdx+1];
+    advLabel.textContent=`Station ${fieldCurStn+1} ready`;
+    advBtn.innerHTML=`Go to station ${nextStn+1} <i class="ti ti-arrow-right"></i>`;
+    advEl.classList.toggle('show',true);
+  }
+}
+
+function toggleFieldShot(j){
+  fieldShots[fieldCurStn][j]=fieldShots[fieldCurStn][j]?0:1;
+  // haptic if available
+  if(navigator.vibrate)navigator.vibrate(10);
+  renderFieldLive();
+}
+
+function fieldAdvance(){
+  const mxP=maxPerStn(fieldFmt);
+  // Auto-miss any unset shots on current station before advancing
+  fieldShots[fieldCurStn]=fieldShots[fieldCurStn].map(s=>s===null?0:s);
+  const order=[];for(let i=0;i<5;i++)order.push((fieldStartStn+i)%5);
+  const orderIdx=order.indexOf(fieldCurStn);
+  if(orderIdx===4){
+    // all done
+    document.getElementById('fl-advance').classList.remove('show');
+    document.getElementById('fl-done-banner').classList.add('show');
+    document.getElementById('fl-save-btn').style.display='block';
+    // update total display
+    const total=fieldShots.flat().reduce((a,b)=>a+b,0);
+    document.getElementById('fl-total').textContent=total;
+  } else {
+    fieldCurStn=order[orderIdx+1];
+    renderFieldLive();
+  }
+}
+
+function endField(){initFieldSetup();}
+
+async function saveField(){
+  const sh=document.getElementById('field-shooter')?.value;
+  const date=document.getElementById('field-date')?.value||today();
+  const eid=document.getElementById('field-event')?.value||null;
+  const yd=fieldFmt==='Handicap'?(parseInt(document.getElementById('field-yd')?.value)||null):null;
+  const loadoutIdx=document.getElementById('field-loadout')?.value;
+  const shooterObj=shooters.find(s=>s.name===sh);
+  const loadout=loadoutIdx!==''&&loadoutIdx!=null&&shooterObj?.shell_loadouts?.[parseInt(loadoutIdx)]
+    ?shooterObj.shell_loadouts[parseInt(loadoutIdx)].name+(shooterObj.shell_loadouts[parseInt(loadoutIdx)].details?' -- '+shooterObj.shell_loadouts[parseInt(loadoutIdx)].details:'')
+    :null;
+  const stations=fieldShots.map(stn=>stn.reduce((a,b)=>a+b,0));
+  const total=stations.reduce((a,b)=>a+b,0);
+  try{await dbInsertRound({shooter:sh,date,format:fieldFmt,stations,total,yardage:yd,shell_loadout:loadout,event_id:eid});}
+  catch(e){alert('Save failed: '+e.message);return;}
+  toast('Round saved!');endField();switchView('dash',document.getElementById('nav-dash'));
+}
+
+
+
+// AUTH SYSTEM
+
+function setAuthTab(tab, btn){
+  document.querySelectorAll('#auth-tab-seg button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('auth-magic-form').style.display=tab==='magic'?'block':'none';
+  document.getElementById('auth-password-form').style.display=tab==='password'?'block':'none';
+}
+
+async function sendMagicLink(){
+  const email=document.getElementById('auth-magic-email').value.trim();
+  if(!email){toast('Enter your email');return;}
+  const {data:inv}=await db.from('invites').select('id').eq('email',email).is('claimed_at',null).maybeSingle();
+  const isAdmin=email===ADMIN_EMAIL;
+  if(!inv&&!isAdmin){toast('No invite found for that email. Ask your club admin.');return;}
+  const {error}=await db.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});
+  if(error){toast('Error: '+error.message);return;}
+  document.getElementById('auth-magic-sent').style.display='block';
+}
+
+async function signInPassword(){
+  const email=document.getElementById('auth-pw-email').value.trim();
+  const password=document.getElementById('auth-pw-password').value;
+  const errEl=document.getElementById('auth-pw-error');
+  errEl.style.display='none';
+  const {error}=await db.auth.signInWithPassword({email,password});
+  if(error){errEl.textContent=error.message;errEl.style.display='block';}
+}
+
+async function signUpPassword(){
+  const email=document.getElementById('auth-pw-email').value.trim();
+  const password=document.getElementById('auth-pw-password').value;
+  const errEl=document.getElementById('auth-pw-error');
+  errEl.style.display='none';
+  if(!email||!password){errEl.textContent='Enter email and password.';errEl.style.display='block';return;}
+  if(password.length<6){errEl.textContent='Password must be at least 6 characters.';errEl.style.display='block';return;}
+  const {data:inv}=await db.from('invites').select('id').eq('email',email).is('claimed_at',null).maybeSingle();
+  const isAdmin=email===ADMIN_EMAIL;
+  if(!inv&&!isAdmin){errEl.textContent='No invite found for that email. Ask your club admin.';errEl.style.display='block';return;}
+  const {error}=await db.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin}});
+  if(error){errEl.textContent=error.message;errEl.style.display='block';}
+  else{errEl.style.cssText='display:block;background:var(--green-bg);color:var(--green-text);border-radius:var(--r);padding:.75rem';errEl.textContent='Account created! Check your email to confirm, then sign in.';}
+}
+
+function showAuthOverlay(){
+  document.getElementById('auth-overlay').style.display='block';
+  document.getElementById('claim-overlay').style.display='none';
+}
+function hideAuthOverlay(){document.getElementById('auth-overlay').style.display='none';}
+
+async function showClaimOverlay(){
+  hideAuthOverlay();
+  const unclaimed=shooters.filter(s=>!s.is_claimed&&!s.auth_user_id);
+  const sel=document.getElementById('claim-select');
+  sel.innerHTML='<option value="">-- select your name --</option>'+
+    unclaimed.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
+  document.getElementById('claim-overlay').style.display='block';
+}
+function hideClaimOverlay(){document.getElementById('claim-overlay').style.display='none';}
+
+async function claimProfile(){
+  const name=document.getElementById('claim-select').value;
+  if(!name){toast('Select your name');return;}
+  const sh=shooters.find(s=>s.name===name);
+  if(!sh){toast('Shooter not found');return;}
+  try{
+    await db.from('shooters').update({auth_user_id:currentUser.id,is_claimed:true}).eq('name',name);
+    await db.from('invites').update({claimed_at:new Date().toISOString(),claimed_by:currentUser.id}).eq('email',currentUser.email).is('claimed_at',null);
+    sh.auth_user_id=currentUser.id;sh.is_claimed=true;
+    currentShooterProfile=sh;
+    document.getElementById('app').style.display='flex';
+    hideClaimOverlay();
+    populateEventSelects();populateChartSelects();renderDash();
+    onAuthReady();toast('Profile linked!');
+  }catch(e){toast('Error: '+e.message);}
+}
+
+async function createAndClaimProfile(){
+  const name=document.getElementById('claim-new-name').value.trim();
+  const cls=document.getElementById('claim-new-cls').value;
+  if(!name){toast('Enter your name');return;}
+  const full=cls?`${name} (${cls})`:name;
+  try{
+    const {data,error}=await db.from('shooters').insert({name:full,shell_notes:'',shell_loadouts:JSON.stringify([]),ata_number:'',auth_user_id:currentUser.id,is_claimed:true}).select().single();
+    if(error)throw error;
+    const newSh={...data,shell_loadouts:[],ata_number:'',is_claimed:true};
+    shooters.push(newSh);currentShooterProfile=newSh;
+    await db.from('invites').update({claimed_at:new Date().toISOString(),claimed_by:currentUser.id}).eq('email',currentUser.email).is('claimed_at',null);
+    document.getElementById('app').style.display='flex';
+    hideClaimOverlay();
+    populateEventSelects();populateChartSelects();renderDash();
+    onAuthReady();toast('Profile created!');
+  }catch(e){toast('Error: '+e.message);}
+}
+
+function openAccountMenu(){
+  const isAdmin=currentUser?.email===ADMIN_EMAIL;
+  document.getElementById('modal-bg').classList.add('open');
+  document.getElementById('modal-sheet').innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-title">Account</div>
+    <div style="text-align:center;padding:.5rem 0 1.25rem">
+      <div class="avatar" style="width:56px;height:56px;font-size:20px;margin:0 auto .75rem">${currentShooterProfile?initials(currentShooterProfile.name):'?'}</div>
+      <div style="font-weight:700;font-size:16px">${currentShooterProfile?.name||'Unknown'}</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:2px">${currentUser?.email||''}</div>
+      ${isAdmin?'<div style="display:inline-block;margin-top:6px;font-size:11px;font-weight:700;background:var(--amber-bg);color:var(--amber-text);padding:2px 10px;border-radius:999px">Club Admin</div>':''}
+    </div>
+    <button class="btn btn-secondary" style="width:100%;margin-bottom:.5rem" onclick="closeModal();switchView('more',document.getElementById('nav-more'))"><i class="ti ti-user-circle"></i> View my profile</button>
+    <button class="btn btn-danger" style="width:100%" onclick="signOut()"><i class="ti ti-logout"></i> Sign out</button>`;
+}
+
+async function signOut(){
+  try{
+    await db.auth.signOut();
+  }catch(e){console.log('signOut error:',e);}
+  currentUser=null;
+  currentShooterProfile=null;
+  rounds=[];shooters=[];events=[];tournaments=[];
+  // hide the app, show login
+  document.getElementById('app').style.display='none';
+  document.getElementById('account-btn').style.display='none';
+  showAuthOverlay();
+  // reset nav to home for next login
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-dash')?.classList.add('active');
+}
+
+async function sendInvite(){
+  const email=document.getElementById('invite-email').value.trim();
+  const result=document.getElementById('invite-result');
+  if(!email){result.textContent='Enter an email address.';return;}
+  try{
+    const {error}=await db.from('invites').insert({email});
+    if(error)throw error;
+    result.textContent='Invite recorded for '+email;
+    document.getElementById('invite-email').value='';
+    loadInviteList();
+  }catch(e){result.textContent='Error: '+e.message;}
+}
+
+async function loadInviteList(){
+  const el=document.getElementById('invite-list');if(!el)return;
+  try{
+    const {data}=await db.from('invites').select('*').order('created_at',{ascending:false});
+    if(!data||!data.length){el.innerHTML='<div style="font-size:13px;color:var(--text3)">No invites sent yet</div>';return;}
+    el.innerHTML=data.map(inv=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <div><div style="font-weight:600">${inv.email}</div><div style="color:var(--text2);font-size:11px">${inv.claimed_at?'Claimed':'Pending'}</div></div>
+        <button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="revokeInvite('${inv.id}')"><i class="ti ti-x"></i></button>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div style="font-size:13px;color:var(--red)">Error loading invites</div>';}
+}
+
+async function revokeInvite(id){
+  if(!confirm('Revoke this invite?'))return;
+  await db.from('invites').delete().eq('id',id);
+  loadInviteList();toast('Invite revoked');
+}
+
+function onAuthReady(){
+  const btn=document.getElementById('account-btn');
+  const label=document.getElementById('account-label');
+  if(btn&&currentShooterProfile){
+    btn.style.display='inline-flex';
+    label.textContent=currentShooterProfile.name.split(' ')[0];
+  }
+  const isAdmin=currentUser?.email===ADMIN_EMAIL;
+  const adminSec=document.getElementById('admin-section');
+  const adminLabel=document.getElementById('admin-section-label');
+  if(adminSec)adminSec.style.display=isAdmin?'block':'none';
+  if(adminLabel)adminLabel.style.display=isAdmin?'block':'none';
+  if(isAdmin)loadInviteList();
+  // Pre-fill profile view
+  renderProfileView();
+}
+
+async function initAuth(){
+  if(!USE_SB)return true;
+  const {data:{session}}=await db.auth.getSession();
+  if(session){
+    currentUser=session.user;
+    await dbLoad();
+    const linked=shooters.find(s=>s.auth_user_id===currentUser.id);
+    if(linked){
+      currentShooterProfile=linked;
+      document.getElementById('app').style.display='flex';
+      onAuthReady();_initAuthDone=true;return true;
+    }
+    else{_initAuthDone=true;await showClaimOverlay();return false;}
+  } else {
+    showAuthOverlay();_initAuthDone=true;return false;
+  }
+}
+
+let _initAuthDone = false;
+
+if(USE_SB){
+  db.auth.onAuthStateChange(async(event,session)=>{
+    // Only handle fresh sign-ins (magic link, password login)
+    // Page-reload sessions are handled by initAuth()
+    if((event==='SIGNED_IN'||event==='TOKEN_REFRESHED')&&session&&_initAuthDone){
+      if(currentUser&&currentUser.id===session.user.id)return; // already handled
+      currentUser=session.user;
+      hideAuthOverlay();
+      document.getElementById('claim-overlay').style.display='none';
+      if(!shooters.length)await dbLoad();
+      const linked=shooters.find(s=>s.auth_user_id===currentUser.id);
+      if(linked){
+        currentShooterProfile=linked;
+        document.getElementById('app').style.display='flex';
+        document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+        document.getElementById('view-dash').classList.add('active');
+        document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+        document.getElementById('nav-dash').classList.add('active');
+        onAuthReady();
+        populateEventSelects();populateChartSelects();renderDash();
+      } else {
+        document.getElementById('app').style.display='none';
+        await showClaimOverlay();
+      }
+    }
+    if(event==='SIGNED_OUT'){
+      currentUser=null;currentShooterProfile=null;
+    }
+  });
+}
+
+
+// GUN LOCKER
+
+async function dbInsertGun(row){
+  if(!currentUser)return null;
+  const {data,error}=await db.from('guns').insert({...row,user_id:currentUser.id}).select().single();
+  if(error)throw error;
+  guns.push(data);
+  return data;
+}
+async function dbDeleteGun(id){
+  await db.from('guns').delete().eq('id',id);
+  guns=guns.filter(g=>g.id!==id);
+}
+async function dbUpdateGun(id,updates){
+  await db.from('guns').update(updates).eq('id',id);
+  const g=guns.find(x=>x.id===id);
+  if(g)Object.assign(g,updates);
+}
+
+function gunModalHTML(editGun){
+  const g=editGun||{};
+  return `<div class="modal-handle"></div>
+    <div class="modal-title">${g.id?'Edit gun':'Add gun'}</div>
+    <input type="hidden" id="gm-id" value="${g.id||''}">
+    <div class="fi"><label>Make</label><input type="text" id="gm-make" placeholder="e.g. Browning, Beretta, Krieghoff" value="${g.make||''}"></div>
+    <div class="fi"><label>Model</label><input type="text" id="gm-model" placeholder="e.g. Citori 725, A400, K-80" value="${g.model||''}"></div>
+    <div class="fi"><label>Gauge</label>
+      <div class="seg" style="grid-template-columns:repeat(4,1fr)" id="gm-gauge-seg">
+        <button onclick="segPick(this,'gm-gauge-seg','gm-gauge','12')" class="${(!g.gauge||g.gauge==='12')?'active':''}">12</button>
+        <button onclick="segPick(this,'gm-gauge-seg','gm-gauge','20')" class="${g.gauge==='20'?'active':''}">20</button>
+        <button onclick="segPick(this,'gm-gauge-seg','gm-gauge','28')" class="${g.gauge==='28'?'active':''}">28</button>
+        <button onclick="segPick(this,'gm-gauge-seg','gm-gauge','.410')" class="${g.gauge==='.410'?'active':''}">.410</button>
+      </div>
+      <input type="hidden" id="gm-gauge" value="${g.gauge||'12'}">
+    </div>
+    <div class="fi"><label>Barrel length</label><input type="text" id="gm-barrel" placeholder="e.g. 30 inch, 32 inch" value="${g.barrel_length||''}"></div>
+    <div class="fi"><label>Choke -- Singles</label><input type="text" id="gm-choke-s" placeholder="e.g. Improved Modified" value="${g.choke_singles||''}"></div>
+    <div class="fi"><label>Choke -- Handicap</label><input type="text" id="gm-choke-h" placeholder="e.g. Full" value="${g.choke_handicap||''}"></div>
+    <div class="fi"><label>Choke -- Doubles</label><input type="text" id="gm-choke-d" placeholder="e.g. IC / Modified" value="${g.choke_doubles||''}"></div>
+    <div class="fi" style="margin-bottom:1rem"><label>Notes</label><input type="text" id="gm-notes" placeholder="Comb height, LOP, any mods..." value="${g.notes||''}"></div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:.5rem" onclick="saveGun()"><i class="ti ti-device-floppy"></i> Save gun</button>
+    <button class="btn btn-secondary" style="width:100%" onclick="closeModal()">Cancel</button>`;
+}
+
+async function saveGun(){
+  const id=document.getElementById('gm-id')?.value;
+  const make=document.getElementById('gm-make')?.value.trim();
+  if(!make){toast('Enter a make/brand');return;}
+  const row={
+    make,
+    model:document.getElementById('gm-model')?.value.trim()||null,
+    gauge:document.getElementById('gm-gauge')?.value||'12',
+    barrel_length:document.getElementById('gm-barrel')?.value.trim()||null,
+    choke_singles:document.getElementById('gm-choke-s')?.value.trim()||null,
+    choke_handicap:document.getElementById('gm-choke-h')?.value.trim()||null,
+    choke_doubles:document.getElementById('gm-choke-d')?.value.trim()||null,
+    notes:document.getElementById('gm-notes')?.value.trim()||null,
+  };
+  try{
+    if(id){await dbUpdateGun(id,row);}
+    else{await dbInsertGun(row);}
+    closeModal();
+    renderGunLocker();
+    renderSessionGunList();
+    toast(id?'Gun updated':'Gun added');
+  }catch(e){alert('Error: '+e.message);}
+}
+
+function renderGunLocker(){
+  const el=document.getElementById('gun-locker-list');if(!el)return;
+  if(!guns.length){
+    el.innerHTML='<div style="font-size:13px;color:var(--text3);margin-bottom:.75rem">No guns in your locker yet</div>';
+    return;
+  }
+  el.innerHTML=guns.filter(g=>g.is_active!==false).map(g=>`
+    <div class="card" style="margin-bottom:.5rem;padding:.75rem 1rem">
+      <div class="row-between">
+        <div>
+          <div style="font-weight:700;font-size:15px">${g.make}${g.model?' '+g.model:''}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">
+            ${g.gauge||'12'}ga${g.barrel_length?' &middot; '+g.barrel_length:''}
+            ${g.choke_singles?' &middot; Singles: '+g.choke_singles:''}
+          </div>
+          ${g.notes?`<div style="font-size:12px;color:var(--text3);margin-top:2px">${g.notes}</div>`:''}
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-secondary btn-sm" onclick="openModal('gun',{editGun:guns.find(x=>x.id==='${g.id}')})"><i class="ti ti-pencil"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDeleteGun('${g.id}')"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function confirmDeleteGun(id){
+  const g=guns.find(x=>x.id===id);
+  if(!g)return;
+  if(!confirm('Remove '+g.make+(g.model?' '+g.model:'')+' from your locker?'))return;
+  await dbUpdateGun(id,{is_active:false});
+  renderGunLocker();toast('Gun removed');
+}
+
+// SESSION
+
+let sessionSelectedGunId=null;
+let sessionPhysicalTags=[];
+let sessionFocusTags=[];
+let sessionRating=0;
+
+function segPick(btn,segId,hiddenId,value){
+  document.querySelectorAll('#'+segId+' button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const h=document.getElementById(hiddenId);if(h)h.value=value;
+}
+
+function toggleTag(btn){
+  btn.classList.toggle('active');
+}
+
+function initSessionView(){
+  if(activeSession){
+    showSessionPhase('active');
+    renderSessionActive();
+    return;
+  }
+  showSessionPhase('setup');
+  document.getElementById('ses-date').value=today();
+  document.getElementById('ses-location').value='';
+  document.getElementById('ses-pre-focus').value='';
+  document.querySelectorAll('.tag-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#ses-weather-seg button, #ses-light-seg button, #ses-wind-seg button, #ses-temp-seg button').forEach(b=>b.classList.remove('active'));
+  ['ses-weather','ses-light','ses-wind','ses-temp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  sessionSelectedGunId=null;
+  renderSessionGunList();
+}
+
+function renderSessionGunList(){
+  const el=document.getElementById('ses-gun-list');if(!el)return;
+  const myGuns=guns.filter(g=>g.is_active!==false);
+  if(!myGuns.length){el.innerHTML='';return;}
+  el.innerHTML=myGuns.map(g=>`
+    <div class="gun-card ${sessionSelectedGunId===g.id?'selected':''}" onclick="selectSessionGun('${g.id}')">
+      <div style="font-weight:700;font-size:14px">${g.make}${g.model?' '+g.model:''}</div>
+      <div style="font-size:12px;color:var(--text2)">${g.gauge||'12'}ga${g.barrel_length?' &middot; '+g.barrel_length:''}</div>
+    </div>`).join('');
+}
+
+function selectSessionGun(id){
+  sessionSelectedGunId=id;
+  renderSessionGunList();
+}
+
+function showSessionPhase(phase){
+  ['setup','active','wrapup'].forEach(p=>{
+    const el=document.getElementById('session-'+p);
+    if(el)el.style.display=p===phase?'flex':'none';
+  });
+}
+
+async function beginSession(){
+  if(!currentUser){toast('Sign in to start a session');return;}
+  const date=document.getElementById('ses-date')?.value||today();
+  const location=document.getElementById('ses-location')?.value.trim()||null;
+  const weather=document.getElementById('ses-weather')?.value||null;
+  const light=document.getElementById('ses-light')?.value||null;
+  const wind=document.getElementById('ses-wind')?.value||null;
+  const temperature=document.getElementById('ses-temp')?.value||null;
+  const preFocus=document.getElementById('ses-pre-focus')?.value.trim()||null;
+  const physTags=Array.from(document.querySelectorAll('#ses-physical-tags .tag-btn.active')).map(b=>b.textContent.trim());
+  const focusTags=Array.from(document.querySelectorAll('#ses-focus-tags .tag-btn.active')).map(b=>b.textContent.trim());
+  try{
+    const {data,error}=await db.from('sessions').insert({
+      user_id:currentUser.id,date,location,
+      gun_id:sessionSelectedGunId||null,
+      weather,light,wind,temperature,
+      physical_state:physTags,
+      pre_focus:preFocus,
+      focus_tags:focusTags,
+    }).select().single();
+    if(error)throw error;
+    activeSession=data;
+    sessions.unshift(data);
+    // update active session banner on home
+    updateActiveSessionBanner();
+    showSessionPhase('active');
+    renderSessionActive();
+    toast('Session started!');
+  }catch(e){alert('Error: '+e.message);}
+}
+
+function updateActiveSessionBanner(){
+  const banner=document.getElementById('active-session-banner');
+  const startBtn=document.getElementById('start-session-btn');
+  const label=document.getElementById('active-session-label');
+  if(!banner||!startBtn)return;
+  if(activeSession){
+    banner.style.display='block';
+    startBtn.style.display='none';
+    const g=guns.find(x=>x.id===activeSession.gun_id);
+    label.textContent=(g?g.make+(g.model?' '+g.model:''):'')+' -- '+activeSession.date;
+  } else {
+    banner.style.display='none';
+    startBtn.style.display='block';
+  }
+}
+
+function renderSessionActive(){
+  const sesRounds=rounds.filter(r=>r.session_id===activeSession?.id);
+  const label=document.getElementById('ses-active-label');
+  if(label){
+    const g=guns.find(x=>x.id===activeSession?.gun_id);
+    label.textContent=(g?g.make+(g.model?' '+g.model:''):'No gun selected')+' -- '+(activeSession?.location||activeSession?.date||'');
+  }
+  // Stats
+  const n=sesRounds.length;
+  const avg=n?(sesRounds.reduce((a,r)=>a+r.total,0)/n).toFixed(1):'--';
+  const high=n?Math.max(...sesRounds.map(r=>r.total)):'--';
+  const statsEl=document.getElementById('ses-round-stats');
+  if(statsEl)statsEl.innerHTML=`
+    <div class="stat-card"><div class="sl">Rounds</div><div class="sv">${n}</div></div>
+    <div class="stat-card"><div class="sl">Average</div><div class="sv">${avg}</div></div>
+    <div class="stat-card"><div class="sl">High</div><div class="sv">${high}</div></div>
+    <div class="stat-card"><div class="sl">Date</div><div class="sv" style="font-size:14px">${activeSession?.date||''}</div></div>`;
+  // Rounds list
+  const listEl=document.getElementById('ses-rounds-list');
+  if(listEl)listEl.innerHTML=sesRounds.length?sesRounds.map(r=>{
+    const mx=maxTotal(r.format);
+    const pct=Math.round(r.total/mx*100);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      ${fmtBadge(r.format)}
+      ${r.yardage?'<span style="font-size:11px;color:var(--text3)">'+r.yardage+'yd</span>':''}
+      <div style="flex:1;background:var(--bg2);border-radius:3px;height:5px">
+        <div style="width:${pct}%;background:var(--blue);height:5px;border-radius:3px"></div>
+      </div>
+      <span style="font-weight:700;min-width:44px;text-align:right">${r.total}/${mx}</span>
+    </div>`;
+  }).join(''):'<div class="empty">No rounds yet -- add one below</div>';
+}
+
+function showSessionWrapup(){
+  showSessionPhase('wrapup');
+  sessionRating=0;
+  document.querySelectorAll('.rating-star').forEach(s=>s.classList.remove('active'));
+  document.getElementById('ses-post-notes').value='';
+  // Summary
+  const sesRounds=rounds.filter(r=>r.session_id===activeSession?.id);
+  const n=sesRounds.length;
+  const avg=n?(sesRounds.reduce((a,r)=>a+r.total,0)/n).toFixed(1):'--';
+  const high=n?Math.max(...sesRounds.map(r=>r.total)):'--';
+  const g=guns.find(x=>x.id===activeSession?.gun_id);
+  const el=document.getElementById('ses-wrapup-summary');
+  if(el)el.innerHTML=`
+    <div style="font-weight:700;font-size:16px;margin-bottom:.25rem">${g?g.make+(g.model?' '+g.model:''):'Session'}</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:.75rem">${activeSession?.date||''}${activeSession?.location?' &middot; '+activeSession.location:''}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div class="stat-card"><div class="sl">Rounds</div><div class="sv" style="font-size:18px">${n}</div></div>
+      <div class="stat-card"><div class="sl">Avg</div><div class="sv" style="font-size:18px">${avg}</div></div>
+      <div class="stat-card"><div class="sl">High</div><div class="sv" style="font-size:18px">${high}</div></div>
+    </div>
+    ${activeSession?.pre_focus?`<div style="margin-top:.75rem;padding:.75rem;background:var(--bg2);border-radius:var(--r);font-size:13px;color:var(--text2)"><strong>Focus:</strong> ${activeSession.pre_focus}</div>`:''}`;
+}
+
+function setSessionRating(n){
+  sessionRating=n;
+  document.getElementById('ses-rating').value=n;
+  document.querySelectorAll('.rating-star').forEach((s,i)=>{
+    s.classList.toggle('active',i<n);
+  });
+}
+
+async function saveSession(){
+  if(!activeSession)return;
+  const postNotes=document.getElementById('ses-post-notes')?.value.trim()||null;
+  const rating=sessionRating||null;
+  try{
+    await db.from('sessions').update({post_notes:postNotes,rating}).eq('id',activeSession.id);
+    const s=sessions.find(x=>x.id===activeSession.id);
+    if(s){s.post_notes=postNotes;s.rating=rating;}
+    activeSession=null;
+    updateActiveSessionBanner();
+    toast('Session saved!');
+    switchView('dash',document.getElementById('nav-dash'));
+  }catch(e){alert('Error: '+e.message);}
+}
+
+function discardSession(){
+  if(!confirm('Discard this session? Rounds already logged will be kept.'))return;
+  activeSession=null;
+  updateActiveSessionBanner();
+  showSessionPhase('setup');
+  switchView('dash',document.getElementById('nav-dash'));
+}
+
+// SESSION FEED on Home tab
+function renderSessionFeed(){
+  // Show past sessions below recent rounds on home
+  const el=document.getElementById('d-session-feed');if(!el)return;
+  const mySessions=[...sessions].slice(0,5);
+  if(!mySessions.length){el.innerHTML='';return;}
+  el.innerHTML=`<div class="card-title" style="margin-bottom:.5rem">Recent sessions</div>`+
+    mySessions.map(s=>{
+      const sesRounds=rounds.filter(r=>r.session_id===s.id);
+      const n=sesRounds.length;
+      const avg=n?(sesRounds.reduce((a,r)=>a+r.total,0)/n).toFixed(1):'--';
+      const g=guns.find(x=>x.id===s.gun_id);
+      const stars=s.rating?'&#9733;'.repeat(s.rating)+'<span style="color:var(--text3)">&#9733;'.repeat(5-s.rating)+'</span>':'';
+      const physTags=(s.physical_state||[]).slice(0,3).map(t=>`<span style="font-size:10px;background:var(--bg3);padding:2px 7px;border-radius:999px;color:var(--text2)">${t}</span>`).join('');
+      return `<div class="session-feed-card">
+        <div class="row-between" style="margin-bottom:.5rem">
+          <div>
+            <div style="font-weight:700;font-size:14px">${g?g.make+(g.model?' '+g.model:''):'Session'}</div>
+            <div style="font-size:12px;color:var(--text2)">${s.date}${s.location?' &middot; '+s.location:''}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:18px;font-weight:800">${avg}</div>
+            <div style="font-size:11px;color:var(--text3)">${n} round${n!==1?'s':''}</div>
+          </div>
+        </div>
+        ${stars?`<div style="font-size:14px;margin-bottom:.4rem">${stars}</div>`:''}
+        ${physTags?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:.4rem">${physTags}</div>`:''}
+        ${s.pre_focus?`<div style="font-size:12px;color:var(--text2);font-style:italic">"${s.pre_focus.slice(0,80)}${s.pre_focus.length>80?'...':''}"</div>`:''}
+        ${s.post_notes?`<div style="font-size:12px;color:var(--text2);margin-top:.3rem;padding-top:.3rem;border-top:1px solid var(--border)">${s.post_notes.slice(0,120)}${s.post_notes.length>120?'...':''}</div>`:''}
+      </div>`;
+    }).join('');
+}
+
+
+// PROFILE VIEW
+
+let profileTrendChart = null;
+
+function renderProfileView(){
+  if(!currentShooterProfile){
+    // not logged in yet - show placeholder
+    const el = document.getElementById('profile-account-card');
+    if(el) el.innerHTML = '<div class="empty">Sign in to view your profile</div>';
+    return;
+  }
+  const name = currentShooterProfile.name;
+  const isAdmin = currentUser?.email === ADMIN_EMAIL;
+
+  // Account card
+  const avatarEl = document.getElementById('profile-avatar');
+  const nameEl = document.getElementById('profile-name');
+  const emailEl = document.getElementById('profile-email');
+  const badgeEl = document.getElementById('profile-admin-badge');
+  if(avatarEl) avatarEl.textContent = initials(name);
+  if(nameEl) nameEl.textContent = name;
+  if(emailEl) emailEl.textContent = currentUser?.email || '';
+  if(badgeEl) badgeEl.style.display = isAdmin ? 'block' : 'none';
+
+  // ATA
+  const ataInput = document.getElementById('profile-ata-input');
+  const ataHint = document.getElementById('profile-ata-hint');
+  if(ataInput) ataInput.value = currentShooterProfile.ata_number || '';
+  if(ataHint) ataHint.textContent = currentShooterProfile.ata_number
+    ? 'ATA # ' + currentShooterProfile.ata_number
+    : 'No ATA number on file';
+
+  // Shell loadouts
+  renderMyLoadouts();
+
+  // Stats
+  const rs = rounds.filter(r => r.shooter === name);
+  const byFmt = {
+    Singles: rs.filter(r=>r.format==='Singles'),
+    Handicap: rs.filter(r=>r.format==='Handicap'),
+    Doubles: rs.filter(r=>r.format==='Doubles'),
+  };
+  const af = arr => arr.length ? (arr.reduce((a,r)=>a+r.total,0)/arr.length).toFixed(1) : '--';
+  const hf = arr => arr.length ? Math.max(...arr.map(r=>r.total)) : '--';
+  const statsEl = document.getElementById('profile-my-stats');
+  if(statsEl) statsEl.innerHTML = ['Singles','Handicap','Doubles'].map(f=>`
+    <div class="stat-card">
+      <div class="sl">${f}</div>
+      <div class="sv" style="font-size:20px">${af(byFmt[f])}</div>
+      <div style="font-size:11px;color:var(--text2)">Hi ${hf(byFmt[f])}</div>
+    </div>`).join('');
+
+  // Station averages
+  const stnT=[0,0,0,0,0], stnC=[0,0,0,0,0];
+  rs.forEach(r=>{r.stations.forEach((s,i)=>{stnT[i]+=s;stnC[i]++;});});
+  const stnEl = document.getElementById('profile-stn-avgs');
+  if(stnEl) stnEl.innerHTML = [0,1,2,3,4].map(i=>{
+    const avg = stnC[i] ? (stnT[i]/stnC[i]).toFixed(1) : '--';
+    const pct = stnC[i] ? Math.round((stnT[i]/stnC[i])/5*100) : 0;
+    return `<div class="stn-avg-card">
+      <div class="san">Stn ${i+1}</div>
+      <div class="sav">${avg}</div>
+      <div class="spct">${pct}%</div>
+      <div class="stn-bar"><div class="stn-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+
+  // Recent rounds
+  const recent = [...rs].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
+  const rndEl = document.getElementById('profile-recent-rounds');
+  if(rndEl) rndEl.innerHTML = recent.length ? recent.map(r=>{
+    const mx=maxTotal(r.format);
+    const pct=Math.round(r.total/mx*100);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px;color:var(--text2);width:70px">${r.date}</span>
+      ${fmtBadge(r.format)}
+      ${r.yardage ? '<span style="font-size:11px;color:var(--text3)">'+r.yardage+'yd</span>' : ''}
+      <div style="flex:1;background:var(--bg2);border-radius:3px;height:5px">
+        <div style="width:${pct}%;background:var(--blue);height:5px;border-radius:3px"></div>
+      </div>
+      <span style="font-weight:700;min-width:44px;text-align:right">${r.total}/${mx}</span>
+    </div>`;
+  }).join('') : '<div class="empty">No rounds yet</div>';
+
+  // Trend chart
+  if(profileTrendChart){profileTrendChart.destroy();profileTrendChart=null;}
+  setTimeout(()=>{
+    const cv = document.getElementById('profile-trend-chart');
+    if(!cv) return;
+    const sorted = [...rs].sort((a,b)=>a.date.localeCompare(b.date)).slice(-20);
+    if(sorted.length < 2) return;
+    profileTrendChart = new Chart(cv, {
+      type:'line',
+      data:{
+        labels:sorted.map(r=>r.date.slice(5)),
+        datasets:[{label:'Score',data:sorted.map(r=>r.total),borderColor:'#378ADD',
+          backgroundColor:'rgba(55,138,221,0.07)',tension:.3,pointRadius:3,
+          borderWidth:2,pointBackgroundColor:'#378ADD'}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{y:{min:0,ticks:{font:{size:11}},grid:{color:'rgba(128,128,128,0.1)'}},
+          x:{ticks:{font:{size:11}},grid:{display:false}}}}
+    });
+  }, 60);
+
+  // Gun locker
+  renderGunLocker();
+  // Admin section
+  if(isAdmin) loadInviteList();
+}
+
+async function saveMyATA(){
+  const val = document.getElementById('profile-ata-input')?.value.trim() || '';
+  if(!currentShooterProfile) return;
+  await dbUpdateShooterATA(currentShooterProfile.name, val);
+  currentShooterProfile.ata_number = val;
+  const hint = document.getElementById('profile-ata-hint');
+  if(hint) hint.textContent = val ? 'ATA # ' + val : 'No ATA number on file';
+  toast('ATA number saved');
+}
+
+function renderMyLoadouts(){
+  const el = document.getElementById('profile-loadout-list');
+  if(!el || !currentShooterProfile) return;
+  const loadouts = currentShooterProfile.shell_loadouts || [];
+  if(!loadouts.length){
+    el.innerHTML = '<div style="font-size:13px;color:var(--text3);margin-bottom:.75rem">No loadouts yet</div>';
+    return;
+  }
+  el.innerHTML = loadouts.map((l,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <div style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:9px 12px;font-size:14px">
+        <span style="font-weight:600">${l.name}</span>${l.details ? ' <span style="color:var(--text2);font-size:12px">-- '+l.details+'</span>' : ''}
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteMyLoadout(${i})"><i class="ti ti-trash"></i></button>
+    </div>`).join('');
+}
+
+async function addMyLoadout(){
+  const lname = document.getElementById('profile-loadout-name')?.value.trim();
+  const ldetails = document.getElementById('profile-loadout-details')?.value.trim();
+  if(!lname){toast('Enter a label');return;}
+  if(!currentShooterProfile) return;
+  const loadouts = [...(currentShooterProfile.shell_loadouts||[]), {name:lname, details:ldetails||''}];
+  await dbUpdateShooterLoadouts(currentShooterProfile.name, loadouts);
+  currentShooterProfile.shell_loadouts = loadouts;
+  document.getElementById('profile-loadout-name').value = '';
+  document.getElementById('profile-loadout-details').value = '';
+  renderMyLoadouts();
+  toast('Loadout saved');
+}
+
+async function deleteMyLoadout(idx){
+  if(!currentShooterProfile) return;
+  const loadouts = (currentShooterProfile.shell_loadouts||[]).filter((_,i)=>i!==idx);
+  await dbUpdateShooterLoadouts(currentShooterProfile.name, loadouts);
+  currentShooterProfile.shell_loadouts = loadouts;
+  renderMyLoadouts();
+  toast('Loadout removed');
+}
+
+(async()=>{
+  const authed=await initAuth();
+  if(authed||!USE_SB){
+    if(!rounds.length)await dbLoad();
+    populateEventSelects();
+    populateChartSelects();
+    renderDash();
+  }
+})();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js')
+      .then(r=>console.log('SW registered'))
+      .catch(e=>console.log('SW failed:',e));
+  });
+}
+</script>
+</body>
+</html>
