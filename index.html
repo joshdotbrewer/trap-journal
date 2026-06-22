@@ -208,6 +208,73 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
 ═══════════════════════════════════════════════════ */
 #sub-view{position:fixed;inset:0;background:var(--bg3);z-index:30;display:none;flex-direction:column}
 #sub-view.open{display:flex}
+
+/* ── DESKTOP LAYOUT 1024px+ ── */
+@media(min-width:1024px){
+  body{overflow:auto;flex-direction:row}
+  #app{flex-direction:row;overflow:auto}
+
+  /* Sidebar */
+  .bottom-nav{
+    width:220px;height:100vh;flex-direction:column;
+    border-top:none;border-right:1px solid var(--border);
+    padding:0;position:sticky;top:0;flex-shrink:0;
+    overflow-y:auto;justify-content:flex-start;
+  }
+  .bottom-nav::before{
+    content:'Trap Journal';display:block;
+    padding:1.5rem 1.25rem 1.25rem;
+    font-size:17px;font-weight:800;color:var(--text);
+    border-bottom:1px solid var(--border);
+    letter-spacing:-.01em;
+  }
+  .nav-btn{
+    flex-direction:row;justify-content:flex-start;gap:12px;
+    padding:13px 1.25rem;border-bottom:none;
+    border-left:3px solid transparent;border-radius:0;
+    font-size:14px;width:100%;text-align:left;
+  }
+  .nav-btn i{font-size:18px}
+  .nav-btn.active{border-left-color:var(--blue);background:var(--blue-bg);color:var(--blue)}
+  .nav-btn .nav-label{font-size:14px;font-weight:500}
+
+  /* Views */
+  #app>.view{flex:1;overflow-y:auto;height:100vh}
+  .view.active{display:flex}
+  .scroll-area{padding:1.5rem;padding-bottom:2rem;max-width:1200px}
+
+  /* Header */
+  .dash-header{padding:1.25rem 1.5rem;position:sticky;top:0;z-index:5;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .dash-title{font-size:22px}
+
+  /* Two-col layout helpers */
+  .dt-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;align-items:start}
+  .dt-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem;align-items:start}
+  .dt-full{grid-column:1/-1}
+
+  /* Stats */
+  .sg{grid-template-columns:repeat(4,1fr)}
+
+  /* Tables */
+  .tbl{font-size:14px}
+  .tbl th,.tbl td{padding:10px 12px}
+
+  /* Modal as centered dialog */
+  .modal-bg{align-items:center;padding:2rem}
+  .modal-sheet{border-radius:var(--rlg);max-height:82vh;width:500px}
+
+  /* Sub-view as overlay panel */
+  #sub-view{position:fixed;left:220px;right:0;top:0;bottom:0}
+
+  /* Card padding */
+  .card{padding:1.25rem 1.5rem}
+
+  /* Auth centered */
+  #auth-overlay>div,#claim-overlay>div{padding-top:5rem}
+
+  /* Safe bottom not needed on desktop */
+  .scroll-area{padding-bottom:2rem}
+}
 </style>
 </head>
 <body>
@@ -292,7 +359,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
   </div>
 
   <div class="scroll-area">
-    <!-- Start session CTA -->
+    <!-- Session CTA - full width -->
     <div id="active-session-banner" style="display:none;background:var(--blue);border-radius:var(--rlg);padding:1rem;margin-bottom:.75rem;cursor:pointer" onclick="switchView('session',document.getElementById('nav-session'))">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div>
@@ -305,34 +372,46 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
     <button id="start-session-btn" class="btn btn-primary" style="width:100%;margin-bottom:1rem;padding:14px;font-size:16px" onclick="switchView('session',document.getElementById('nav-session'))">
       <i class="ti ti-notebook"></i> Start practice session
     </button>
-    <!-- stat cards -->
-    <div class="stat-grid" id="d-stats"></div>
 
-    <!-- quick filters -->
-    <div class="row" style="gap:8px;margin-bottom:.75rem">
-      <select id="d-fmt" onchange="renderDash()" style="flex:1;padding:9px 12px;font-size:13px">
-        <option value="">All formats</option><option>Singles</option><option>Handicap</option><option>Doubles</option>
-      </select>
-      <select id="d-evt" onchange="renderDash()" style="flex:1;padding:9px 12px;font-size:13px">
-        <option value="">All events</option>
-      </select>
-    </div>
+    <!-- Desktop: two-column grid. Mobile: single column. -->
+    <div class="dt-grid">
 
-    <!-- recent rounds -->
-    <div class="card" id="recent-rounds-card">
-      <div class="card-title">Recent rounds</div>
-      <div id="d-rounds"></div>
-    </div>
+      <!-- LEFT COL: journal / session feed -->
+      <div class="dt-full">
+        <div class="sg" id="d-stats" style="margin-bottom:.75rem"></div>
+      </div>
+      <div>
+        <!-- Recent rounds -->
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+            <div class="card-title" style="margin-bottom:0">Recent rounds</div>
+            <div style="display:flex;gap:6px">
+              <select id="d-fmt" onchange="renderDash()" style="padding:6px 10px;font-size:12px">
+                <option value="">All formats</option><option>Singles</option><option>Handicap</option><option>Doubles</option>
+              </select>
+              <select id="d-evt" onchange="renderDash()" style="padding:6px 10px;font-size:12px">
+                <option value="">All events</option>
+              </select>
+            </div>
+          </div>
+          <div id="d-rounds"></div>
+        </div>
+        <!-- Session feed -->
+        <div id="d-session-feed" style="margin-top:.25rem"></div>
+      </div>
 
-    <!-- station averages -->
-    <div class="card">
-      <div class="card-title">Station averages</div>
-      <div class="stn-avg-grid" id="d-stn-avgs"></div>
-    </div>
+      <!-- RIGHT COL: stats & data -->
+      <div>
+        <!-- Station averages -->
+        <div class="card">
+          <div class="card-title">Station averages</div>
+          <div class="stn-avg-grid" id="d-stn-avgs"></div>
+        </div>
+        <!-- Events / tournaments -->
+        <div id="d-events"></div>
+      </div>
 
-    <!-- events / tournaments -->
-    <div id="d-events"></div>
-    <div id="d-session-feed" style="margin-top:.25rem"></div>
+    </div><!-- /dt-grid -->
 
   </div><!-- /scroll-area -->
 </div><!-- /view-dash -->
@@ -486,6 +565,8 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
     <button class="btn btn-secondary btn-sm" onclick="signOut()"><i class="ti ti-logout"></i> Sign out</button>
   </div>
   <div class="scroll-area">
+    <div class="dt-grid">
+    <div><!-- profile left col -->
     <!-- Account card -->
     <div class="card" id="profile-account-card" style="text-align:center;padding:1.5rem 1rem">
       <div class="avatar" id="profile-avatar" style="width:64px;height:64px;font-size:22px;margin:0 auto .75rem">?</div>
@@ -499,6 +580,8 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
     <!-- My stats quick view -->
     <div class="stat-grid" id="profile-my-stats"></div>
 
+    </div><!-- /profile left col -->
+    <div><!-- profile right col -->
     <!-- ATA number -->
     <div class="card">
       <div class="card-title">ATA number</div>
@@ -546,7 +629,9 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
       <i class="ti ti-plus"></i> Add gun
     </button>
 
-    <!-- Admin section -->
+    </div><!-- /profile right col -->
+    </div><!-- /dt-grid -->
+    <!-- Admin section - full width -->
     <div class="section-label" id="admin-section-label" style="display:none">Admin</div>
     <div id="admin-section" style="display:none">
       <div class="card">
@@ -571,7 +656,8 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
 <div class="view" id="view-club">
   <div class="dash-header"><span class="dash-title">Club</span></div>
   <div class="scroll-area">
-
+    <div class="dt-grid">
+    <div><!-- club left: shooters -->
     <div class="section-label">Shooters</div>
     <div class="card" style="padding:.5rem">
       <div style="display:flex;gap:8px;margin-bottom:8px;padding:.25rem .25rem 0;flex-wrap:wrap">
@@ -587,6 +673,8 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
       <div id="m-shooters-list"></div>
     </div>
 
+    </div><!-- /club left -->
+    <div><!-- club right: events + charts -->
     <div class="section-label">Events & tournaments</div>
     <div class="row" style="gap:8px;margin-bottom:.5rem">
       <button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="openModal('event')"><i class="ti ti-calendar-plus"></i> New event</button>
@@ -616,7 +704,9 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
   </div>
 
   </div>
-</div><!-- /view-club -->
+    </div><!-- /club right -->
+    </div><!-- /dt-grid -->
+  </div><!-- /view-club -->
 
 <!-- SESSION VIEW -->
 <div class="view" id="view-session">
@@ -626,6 +716,8 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
       <button class="btn btn-secondary btn-sm" onclick="switchView('dash',document.getElementById('nav-dash'))"><i class="ti ti-x"></i></button>
     </div>
     <div class="scroll-area">
+      <div class="dt-grid">
+      <div><!-- session left col -->
       <div class="card">
         <div class="card-title">Date &amp; location</div>
         <div class="fi"><label>Date</label><input type="date" id="ses-date"></div>
@@ -686,6 +778,8 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
           <button class="tag-btn" onclick="toggleTag(this)">Feeling great</button>
         </div>
       </div>
+      </div><!-- /session left col -->
+      <div><!-- session right col -->
       <div class="card">
         <div class="card-title">What are you working on today?</div>
         <textarea id="ses-pre-focus" rows="3" placeholder="e.g. Gun mount timing, hard lefts from station 1, follow-through..." style="background:var(--bg2);color:var(--text);border:1px solid var(--border2);border-radius:var(--r);padding:12px;font-size:14px;font-family:inherit;width:100%;resize:vertical;margin-bottom:.75rem"></textarea>
@@ -706,7 +800,9 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
           <button class="tag-btn" onclick="toggleTag(this)">Trigger pull</button>
         </div>
       </div>
-      <button class="btn btn-primary" style="font-size:16px;padding:14px;width:100%" onclick="beginSession()">
+      </div><!-- /session right col -->
+      </div><!-- /dt-grid -->
+      <button class="btn btn-primary" style="font-size:16px;padding:14px;width:100%;margin-top:.5rem" onclick="beginSession()">
         <i class="ti ti-player-play"></i> Begin session
       </button>
     </div>
