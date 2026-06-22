@@ -15,27 +15,33 @@
 <meta name="mobile-web-app-capable" content="yes">
 <style>
 :root {
-  --bg:#ffffff; --bg2:#f5f5f4; --bg3:#ededeb; --bg4:#e5e4e2;
-  --text:#1a1a1a; --text2:#6b6b6b; --text3:#a8a8a0;
-  --border:rgba(0,0,0,0.10); --border2:rgba(0,0,0,0.20);
-  --blue:#378ADD; --blue-bg:#E6F1FB; --blue-text:#0C447C;
-  --green:#1D9E75; --green-bg:#E1F5EE; --green-text:#085041;
-  --amber:#BA7517; --amber-bg:#FAEEDA; --amber-text:#633806;
-  --red:#E24B4A; --red-bg:#FCEBEB;
-  --hit:#22c55e; --miss:#ef4444;
-  --r:10px; --rlg:14px;
+  --bg:#ffffff; --bg2:#f7f7f6; --bg3:#efefed; --bg4:#e5e4e2;
+  --text:#111111; --text2:#666660; --text3:#a0a09a;
+  --border:rgba(0,0,0,0.08); --border2:rgba(0,0,0,0.16);
+  --blue:#2563EB; --blue-bg:#EFF6FF; --blue-text:#1E40AF;
+  --green:#059669; --green-bg:#ECFDF5; --green-text:#065F46;
+  --amber:#D97706; --amber-bg:#FFFBEB; --amber-text:#92400E;
+  --red:#DC2626; --red-bg:#FEF2F2;
+  --hit:#16a34a; --miss:#dc2626;
+  --r:10px; --rlg:16px;
   --nav-h:64px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
+  --shadow:0 4px 6px rgba(0,0,0,0.06),0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg:0 10px 25px rgba(0,0,0,0.1),0 4px 10px rgba(0,0,0,0.05);
 }
 @media (prefers-color-scheme:dark){
   :root{
-    --bg:#141414; --bg2:#1f1f1d; --bg3:#282826; --bg4:#323230;
-    --text:#f0f0ee; --text2:#909088; --text3:#555550;
-    --border:rgba(255,255,255,0.09); --border2:rgba(255,255,255,0.18);
-    --blue-bg:#0c2a4a; --blue-text:#85B7EB;
-    --green-bg:#04342c; --green-text:#9FE1CB;
-    --amber-bg:#2a1e07; --amber-text:#FAC775;
-    --red-bg:#2a0c0c; --red:#F09595;
+    --bg:#0f0f0e; --bg2:#1a1a18; --bg3:#222220; --bg4:#2d2d2a;
+    --text:#f2f2ef; --text2:#8a8a84; --text3:#4a4a45;
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.14);
+    --blue:#3B82F6; --blue-bg:#0f1f3d; --blue-text:#93C5FD;
+    --green-bg:#052e20; --green-text:#6ee7b7;
+    --amber-bg:#1f1400; --amber-text:#fcd34d;
+    --red-bg:#1f0505; --red:#f87171;
+    --shadow-sm:0 1px 3px rgba(0,0,0,0.3);
+    --shadow:0 4px 6px rgba(0,0,0,0.3);
+    --shadow-lg:0 10px 25px rgba(0,0,0,0.4);
   }
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -49,14 +55,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .scroll-area{flex:1;overflow-y:auto;padding:1rem;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 1rem)}
 
 /* ── BOTTOM NAV ── */
-.bottom-nav{height:calc(var(--nav-h) + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:var(--bg);border-top:1px solid var(--border);display:flex;flex-shrink:0;z-index:10}
+.bottom-nav{height:calc(var(--nav-h) + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:var(--bg);border-top:1px solid var(--border);display:flex;flex-shrink:0;z-index:10;box-shadow:0 -1px 0 var(--border)}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:var(--text3);font-size:10px;font-family:inherit;cursor:pointer;padding:8px 4px;transition:color .15s}
 .nav-btn i{font-size:22px}
 .nav-btn.active{color:var(--blue)}
 .nav-btn .nav-label{font-size:10px;font-weight:500}
 
 /* ── CARDS & COMMON ── */
-.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--rlg);padding:1rem;margin-bottom:.75rem}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--rlg);padding:1rem;margin-bottom:.75rem;box-shadow:var(--shadow-sm)}
 .card-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.75rem}
 .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:.75rem}
 .stat-card{background:var(--bg2);border-radius:var(--r);padding:.7rem .9rem}
@@ -70,7 +76,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* ── BUTTONS ── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:var(--r);font-family:inherit;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s}
 .btn:active{transform:scale(.97)}
-.btn-primary{background:var(--blue);color:#fff;padding:13px 20px;font-size:15px;width:100%}
+.btn-primary{background:var(--blue);color:#fff;padding:13px 20px;font-size:15px;width:100%;box-shadow:0 1px 3px rgba(37,99,235,0.3)}
 .btn-secondary{background:var(--bg2);color:var(--text);border:1px solid var(--border2);padding:11px 16px;font-size:14px}
 .btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red);padding:8px 12px;font-size:13px}
 .btn-sm{padding:7px 12px;font-size:13px}
@@ -104,7 +110,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
 /* ── MODAL ── */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;align-items:flex-end;justify-content:center}
 .modal-bg.open{display:flex}
-.modal-sheet{background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;padding:1.25rem 1rem calc(1.25rem + var(--safe-bottom))}
+.modal-sheet{background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;padding:1.25rem 1rem calc(1.25rem + var(--safe-bottom));box-shadow:var(--shadow-lg)}
 .modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto .75rem}
 .modal-title{font-size:17px;font-weight:700;margin-bottom:1rem;text-align:center}
 
@@ -209,71 +215,186 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
 #sub-view{position:fixed;inset:0;background:var(--bg3);z-index:30;display:none;flex-direction:column}
 #sub-view.open{display:flex}
 
+
 /* ── DESKTOP LAYOUT 1024px+ ── */
 @media(min-width:1024px){
-  body{overflow:auto;flex-direction:row}
-  #app{flex-direction:row;overflow:auto}
+  :root{
+    --sidebar-w:240px;
+    --header-h:64px;
+  }
 
-  /* Sidebar */
+  html,body{height:100%;overflow:hidden}
+  body{flex-direction:row;overflow:hidden}
+  #app{flex-direction:row;flex:1;overflow:hidden;height:100vh}
+
+  /* ── SIDEBAR ── */
   .bottom-nav{
-    width:220px;height:100vh;flex-direction:column;
-    border-top:none;border-right:1px solid var(--border);
-    padding:0;position:sticky;top:0;flex-shrink:0;
-    overflow-y:auto;justify-content:flex-start;
+    width:var(--sidebar-w);
+    height:100vh;
+    flex-direction:column;
+    justify-content:flex-start;
+    border-top:none;
+    border-right:1px solid var(--border);
+    padding:0;
+    flex-shrink:0;
+    overflow-y:auto;
+    order:-1;
+    background:var(--bg);
   }
+
+  /* Sidebar logo */
   .bottom-nav::before{
-    content:'Trap Journal';display:block;
-    padding:1.5rem 1.25rem 1.25rem;
-    font-size:17px;font-weight:800;color:var(--text);
+    content:'';
+    display:block;
+    height:64px;
+    background:var(--bg);
     border-bottom:1px solid var(--border);
-    letter-spacing:-.01em;
+    flex-shrink:0;
   }
+  .sidebar-logo{
+    position:absolute;
+    top:0;left:0;width:var(--sidebar-w);height:64px;
+    display:flex;align-items:center;gap:10px;
+    padding:0 1.25rem;
+    pointer-events:none;
+    z-index:20;
+  }
+  .sidebar-logo-icon{
+    width:32px;height:32px;border-radius:8px;
+    background:var(--blue);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .sidebar-logo-text{font-size:16px;font-weight:800;color:var(--text)}
+
+  /* Nav buttons as sidebar items */
   .nav-btn{
-    flex-direction:row;justify-content:flex-start;gap:12px;
-    padding:13px 1.25rem;border-bottom:none;
-    border-left:3px solid transparent;border-radius:0;
-    font-size:14px;width:100%;text-align:left;
+    flex-direction:row;
+    justify-content:flex-start;
+    align-items:center;
+    gap:10px;
+    padding:11px 1.25rem;
+    border-bottom:none;
+    border-left:3px solid transparent;
+    border-radius:0;
+    width:100%;
+    font-size:14px;
+    height:auto;
+    white-space:nowrap;
   }
-  .nav-btn i{font-size:18px}
-  .nav-btn.active{border-left-color:var(--blue);background:var(--blue-bg);color:var(--blue)}
-  .nav-btn .nav-label{font-size:14px;font-weight:500}
+  .nav-btn i{font-size:18px;flex-shrink:0}
+  .nav-btn .nav-label{font-size:14px;font-weight:500;display:block}
+  .nav-btn.active{
+    border-left-color:var(--blue);
+    background:var(--blue-bg);
+    color:var(--blue);
+  }
+  .nav-btn:hover:not(.active){background:var(--bg2)}
 
-  /* Views */
-  #app>.view{flex:1;overflow-y:auto;height:100vh}
-  .view.active{display:flex}
-  .scroll-area{padding:1.5rem;padding-bottom:2rem;max-width:1200px}
+  /* Sidebar bottom: profile shortcut */
+  .nav-spacer{flex:1}
 
-  /* Header */
-  .dash-header{padding:1.25rem 1.5rem;position:sticky;top:0;z-index:5;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-  .dash-title{font-size:22px}
+  /* ── MAIN CONTENT ── */
+  #app>.view{
+    flex:1;
+    overflow:hidden;
+    height:100vh;
+    display:none;
+    flex-direction:column;
+  }
+  #app>.view.active{display:flex}
 
-  /* Two-col layout helpers */
+  /* ── TOP BAR (replaces dash-header on desktop) ── */
+  .dash-header{
+    height:var(--header-h);
+    padding:0 1.5rem;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:1px solid var(--border);
+    background:var(--bg);
+    position:static;
+    gap:12px;
+  }
+  .dash-title{font-size:20px;font-weight:800}
+
+  /* Global action bar (profile + add round) injected by JS */
+  #desktop-action-bar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-left:auto;
+  }
+
+  /* ── SCROLL AREA ── */
+  .scroll-area{
+    flex:1;
+    overflow-y:auto;
+    padding:1.5rem;
+    max-width:1280px;
+    width:100%;
+    margin:0 auto;
+  }
+
+  /* ── GRID HELPERS ── */
   .dt-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;align-items:start}
   .dt-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem;align-items:start}
   .dt-full{grid-column:1/-1}
 
-  /* Stats */
-  .sg{grid-template-columns:repeat(4,1fr)}
+  /* ── STAT CARDS ── */
+  .sg{grid-template-columns:repeat(4,1fr);margin-bottom:1.25rem}
+  .stat-card .sv{font-size:26px}
 
-  /* Tables */
+  /* ── TABLES ── */
   .tbl{font-size:14px}
-  .tbl th,.tbl td{padding:10px 12px}
+  .tbl th,.tbl td{padding:10px 14px}
+  table{table-layout:auto}
 
-  /* Modal as centered dialog */
-  .modal-bg{align-items:center;padding:2rem}
-  .modal-sheet{border-radius:var(--rlg);max-height:82vh;width:500px}
+  /* ── MODALS as centered dialogs ── */
+  .modal-bg{
+    align-items:center;
+    padding:2rem;
+    padding-left:calc(var(--sidebar-w) + 2rem);
+  }
+  .modal-sheet{
+    border-radius:var(--rlg);
+    max-height:85vh;
+    width:520px;
+    padding:1.75rem;
+  }
 
-  /* Sub-view as overlay panel */
-  #sub-view{position:fixed;left:220px;right:0;top:0;bottom:0}
+  /* ── SUB-VIEW ── */
+  #sub-view{
+    position:fixed;
+    left:var(--sidebar-w);
+    right:0;top:0;bottom:0;
+    z-index:30;
+  }
 
-  /* Card padding */
-  .card{padding:1.25rem 1.5rem}
+  /* ── CARDS ── */
+  .card{padding:1.25rem 1.5rem;border-radius:var(--rlg)}
 
-  /* Auth centered */
-  #auth-overlay>div,#claim-overlay>div{padding-top:5rem}
+  /* ── AUTH OVERLAYS ── */
+  #auth-overlay,#claim-overlay{
+    padding-left:0;
+  }
+  #auth-overlay>div,#claim-overlay>div{
+    padding-top:6rem;
+    max-width:440px;
+  }
 
-  /* Safe bottom not needed on desktop */
-  .scroll-area{padding-bottom:2rem}
+  /* ── SESSION ACTIVE: side by side ── */
+  #session-active .scroll-area{padding-bottom:1.5rem}
+
+  /* Bottom nav safe area not needed */
+  .scroll-area{padding-bottom:1.5rem}
+
+  /* ── SCROLLBAR STYLING ── */
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--text3)}
 }
 </style>
 </head>
@@ -346,6 +467,38 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
 </div>
 
 <div id="app">
+<nav class="bottom-nav">
+  <!-- Sidebar logo (desktop only) -->
+  <div class="sidebar-logo" id="sidebar-logo-el" style="display:none">
+    <div class="sidebar-logo-icon"><i class="ti ti-target-arrow" style="color:#fff;font-size:16px"></i></div>
+    <span class="sidebar-logo-text">Trap Journal</span>
+  </div>
+  <button class="nav-btn active" onclick="switchView('dash',this)" id="nav-dash">
+    <i class="ti ti-home"></i><span class="nav-label">Home</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('scorer',this)" id="nav-scorer">
+    <i class="ti ti-clipboard-list"></i><span class="nav-label">Scorer</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('session',this)" id="nav-session">
+    <i class="ti ti-notebook"></i><span class="nav-label">Session</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('field',this)" id="nav-field">
+    <i class="ti ti-bolt"></i><span class="nav-label">Field</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('club',this)" id="nav-club">
+    <i class="ti ti-users"></i><span class="nav-label">Club</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('profile',this)" id="nav-profile">
+    <i class="ti ti-user-circle"></i><span class="nav-label">Profile</span>
+  </button>
+  <div class="nav-spacer" style="display:none" id="nav-spacer"></div>
+  <!-- Desktop bottom of sidebar -->
+  <div id="sidebar-bottom" style="display:none;border-top:1px solid var(--border);padding:.75rem 1.25rem">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em" id="sidebar-user-name"></div>
+    <div style="font-size:11px;color:var(--text3)" id="sidebar-user-email"></div>
+  </div>
+</nav>
+
 
 <!-- ══════════════ DASHBOARD VIEW ══════════════ -->
 <div class="view active" id="view-dash">
@@ -856,26 +1009,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
   </div>
 </div><!-- /view-session -->
 
-<nav class="bottom-nav">
-  <button class="nav-btn active" onclick="switchView('dash',this)" id="nav-dash">
-    <i class="ti ti-home"></i><span class="nav-label">Home</span>
-  </button>
-  <button class="nav-btn" onclick="switchView('scorer',this)" id="nav-scorer">
-    <i class="ti ti-clipboard-list"></i><span class="nav-label">Scorer</span>
-  </button>
-  <button class="nav-btn" onclick="switchView('session',this)" id="nav-session">
-    <i class="ti ti-notebook"></i><span class="nav-label">Session</span>
-  </button>
-  <button class="nav-btn" onclick="switchView('field',this)" id="nav-field">
-    <i class="ti ti-bolt"></i><span class="nav-label">Field</span>
-  </button>
-  <button class="nav-btn" onclick="switchView('club',this)" id="nav-club">
-    <i class="ti ti-users"></i><span class="nav-label">Club</span>
-  </button>
-  <button class="nav-btn" onclick="switchView('profile',this)" id="nav-profile">
-    <i class="ti ti-user-circle"></i><span class="nav-label">Profile</span>
-  </button>
-</nav>
+
 
 <!-- ══════════════ SUB-VIEW (profiles, station detail) ══════════════ -->
 <div id="sub-view">
@@ -2219,6 +2353,8 @@ async function revokeInvite(id){
   loadInviteList();toast('Invite revoked');
 }
 
+function isDesktop(){return window.innerWidth>=1024;}
+
 function onAuthReady(){
   const btn=document.getElementById('account-btn');
   const label=document.getElementById('account-label');
@@ -2232,8 +2368,39 @@ function onAuthReady(){
   if(adminSec)adminSec.style.display=isAdmin?'block':'none';
   if(adminLabel)adminLabel.style.display=isAdmin?'block':'none';
   if(isAdmin)loadInviteList();
+  // Desktop sidebar extras
+  if(isDesktop()){
+    const logo=document.getElementById('sidebar-logo-el');
+    const spacer=document.getElementById('nav-spacer');
+    const sideBot=document.getElementById('sidebar-bottom');
+    const sideUser=document.getElementById('sidebar-user-name');
+    const sideEmail=document.getElementById('sidebar-user-email');
+    if(logo)logo.style.display='flex';
+    if(spacer)spacer.style.display='block';
+    if(sideBot)sideBot.style.display='block';
+    if(sideUser)sideUser.textContent=currentShooterProfile?.name||'';
+    if(sideEmail)sideEmail.textContent=currentUser?.email||'';
+    injectDesktopActionBars();
+  }
   // Pre-fill profile view
   renderProfileView();
+}
+
+function injectDesktopActionBars(){
+  // Add profile btn + round btn to every dash-header on desktop
+  document.querySelectorAll('.dash-header').forEach(hdr=>{
+    if(hdr.querySelector('.desktop-actions'))return; // already injected
+    const bar=document.createElement('div');
+    bar.className='desktop-actions';
+    bar.style.cssText='display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0';
+    bar.innerHTML=`
+      <button class="btn btn-secondary btn-sm" onclick="openModal('round')" style="gap:6px"><i class="ti ti-plus"></i> Add round</button>
+      <button class="btn btn-secondary btn-sm" onclick="switchView('profile',document.getElementById('nav-profile'))" style="gap:6px">
+        <i class="ti ti-user-circle"></i>
+        <span>${currentShooterProfile?.name?.split(' ')[0]||'Profile'}</span>
+      </button>`;
+    hdr.appendChild(bar);
+  });
 }
 
 async function initAuth(){
