@@ -223,23 +223,27 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
     --header-h:64px;
   }
 
-  html,body{height:100%;overflow:hidden}
-  body{flex-direction:row;overflow:hidden}
-  #app{flex-direction:row;flex:1;overflow:hidden;height:100vh}
+  html,body{height:100%;overflow:hidden;min-width:1024px}
+  body{flex-direction:row;overflow:hidden;width:100%;height:100%}
+  #app{flex-direction:row;flex:1;overflow:hidden;height:100vh;width:100%;min-width:0}
 
   /* ── SIDEBAR ── */
   .bottom-nav{
-    width:var(--sidebar-w);
+    width:var(--sidebar-w) !important;
+    min-width:var(--sidebar-w) !important;
+    max-width:var(--sidebar-w) !important;
     height:100vh;
     flex-direction:column;
     justify-content:flex-start;
     border-top:none;
     border-right:1px solid var(--border);
     padding:0;
-    flex-shrink:0;
+    flex-shrink:0 !important;
     overflow-y:auto;
     order:-1;
     background:var(--bg);
+    position:relative;
+    z-index:10;
   }
 
   /* Sidebar logo */
@@ -296,7 +300,8 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
 
   /* ── MAIN CONTENT ── */
   #app>.view{
-    flex:1;
+    flex:1 1 0;
+    min-width:0;
     overflow:hidden;
     height:100vh;
     display:none;
@@ -370,6 +375,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
     left:var(--sidebar-w);
     right:0;top:0;bottom:0;
     z-index:30;
+    width:calc(100vw - var(--sidebar-w));
   }
 
   /* ── CARDS ── */
@@ -377,7 +383,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
 
   /* ── AUTH OVERLAYS ── */
   #auth-overlay,#claim-overlay{
-    padding-left:0;
+    padding-left:var(--sidebar-w);
   }
   #auth-overlay>div,#claim-overlay>div{
     padding-top:6rem;
@@ -611,7 +617,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
   </div>
 
   <!-- LIVE SCORING -->
-  <div id="scorer-live" style="display:none;flex-direction:column;flex:1">
+  <div id="scorer-live" style="display:none;flex-direction:column;flex:1;min-width:0;overflow:hidden">
     <div style="padding:.6rem 1rem;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0">
       <div class="row-between">
         <button class="btn btn-secondary btn-sm" onclick="endScorer()"><i class="ti ti-x"></i> Cancel</button>
@@ -629,7 +635,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
   </div>
 
   <!-- DONE -->
-  <div id="scorer-done" style="display:none;flex-direction:column;flex:1">
+  <div id="scorer-done" style="display:none;flex-direction:column;flex:1;min-width:0;overflow:hidden">
     <div class="dash-header"><span class="dash-title">Round complete</span></div>
     <div class="scroll-area">
       <div id="scorer-summary"></div>
@@ -862,8 +868,8 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
   </div><!-- /view-club -->
 
 <!-- SESSION VIEW -->
-<div class="view" id="view-session">
-  <div id="session-setup" style="display:flex;flex-direction:column;flex:1">
+<div class="view" id="view-session" style="min-width:0">
+  <div id="session-setup" style="display:flex;flex-direction:column;flex:1;min-width:0;overflow:hidden">
     <div class="dash-header">
       <span class="dash-title">New session</span>
       <button class="btn btn-secondary btn-sm" onclick="switchView('dash',document.getElementById('nav-dash'))"><i class="ti ti-x"></i></button>
@@ -961,7 +967,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
     </div>
   </div>
 
-  <div id="session-active" style="display:none;flex-direction:column;flex:1">
+  <div id="session-active" style="display:none;flex-direction:column;flex:1;min-width:0;overflow:hidden">
     <div class="dash-header">
       <div>
         <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Active session</div>
@@ -983,7 +989,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
     </div>
   </div>
 
-  <div id="session-wrapup" style="display:none;flex-direction:column;flex:1">
+  <div id="session-wrapup" style="display:none;flex-direction:column;flex:1;min-width:0;overflow:hidden">
     <div class="dash-header"><span class="dash-title">Wrap up</span></div>
     <div class="scroll-area">
       <div class="card" id="ses-wrapup-summary"></div>
