@@ -392,6 +392,8 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
 
   /* ── SESSION ACTIVE: side by side ── */
   #session-active .scroll-area{padding-bottom:1.5rem}
+  #session-setup .scroll-area{max-width:680px;margin:0 auto}
+  #session-wrapup .scroll-area{max-width:680px;margin:0 auto}
 
   /* Bottom nav safe area not needed */
   .scroll-area{padding-bottom:1.5rem}
@@ -402,6 +404,64 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
   ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
   ::-webkit-scrollbar-thumb:hover{background:var(--text3)}
 }
+
+/* ── TAG BUTTONS ── */
+.tag-btn{
+  background:var(--bg2);
+  border:1.5px solid var(--border2);
+  border-radius:999px;
+  padding:8px 16px;
+  font-size:13px;
+  font-weight:500;
+  cursor:pointer;
+  color:var(--text2);
+  font-family:inherit;
+  transition:all .12s;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+  display:inline-block;
+}
+.tag-btn:hover{background:var(--bg3);color:var(--text)}
+.tag-btn.active{
+  background:var(--blue) !important;
+  border-color:var(--blue) !important;
+  color:#fff !important;
+  font-weight:600;
+}
+.tag-btn:active{transform:scale(.94)}
+
+/* ── RATING STARS ── */
+.rating-star{
+  background:none;border:none;font-size:32px;
+  cursor:pointer;color:var(--text3);padding:4px;
+  font-family:inherit;transition:color .15s;
+}
+.rating-star.active{color:#F5A623}
+
+/* ── GUN CARDS ── */
+.gun-card{
+  background:var(--bg2);
+  border:2px solid var(--border);
+  border-radius:var(--r);
+  padding:.75rem 1rem;
+  margin-bottom:.5rem;
+  cursor:pointer;
+  transition:all .15s;
+}
+.gun-card:hover{background:var(--bg3)}
+.gun-card.selected{border-color:var(--blue);background:var(--blue-bg)}
+.gun-card:active{transform:scale(.98)}
+
+/* ── SESSION FEED ── */
+.session-feed-card{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--rlg);
+  padding:1rem;
+  margin-bottom:.75rem;
+  box-shadow:var(--shadow-sm);
+}
+
 </style>
 </head>
 <body>
@@ -491,9 +551,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
   <button class="nav-btn" onclick="switchView('field',this)" id="nav-field">
     <i class="ti ti-bolt"></i><span class="nav-label">Field</span>
   </button>
-  <button class="nav-btn" onclick="switchView('club',this)" id="nav-club">
-    <i class="ti ti-users"></i><span class="nav-label">Club</span>
-  </button>
+
   <button class="nav-btn" onclick="switchView('profile',this)" id="nav-profile">
     <i class="ti ti-user-circle"></i><span class="nav-label">Profile</span>
   </button>
@@ -792,6 +850,11 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
     </div><!-- /dt-grid -->
     <!-- Admin section - full width -->
     <div class="section-label" id="admin-section-label" style="display:none">Admin</div>
+    <div id="admin-club-section" style="display:none">
+      <button class="btn btn-secondary" style="width:100%;margin-bottom:.75rem" onclick="switchView('club',null)">
+        <i class="ti ti-users"></i> Club roster &amp; data
+      </button>
+    </div>
     <div id="admin-section" style="display:none">
       <div class="card">
         <div class="card-title">Send invite</div>
@@ -875,8 +938,6 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
       <button class="btn btn-secondary btn-sm" onclick="switchView('dash',document.getElementById('nav-dash'))"><i class="ti ti-x"></i></button>
     </div>
     <div class="scroll-area">
-      <div class="dt-grid">
-      <div><!-- session left col -->
       <div class="card">
         <div class="card-title">Date &amp; location</div>
         <div class="fi"><label>Date</label><input type="date" id="ses-date"></div>
@@ -937,8 +998,6 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
           <button class="tag-btn" onclick="toggleTag(this)">Feeling great</button>
         </div>
       </div>
-      </div><!-- /session left col -->
-      <div><!-- session right col -->
       <div class="card">
         <div class="card-title">What are you working on today?</div>
         <textarea id="ses-pre-focus" rows="3" placeholder="e.g. Gun mount timing, hard lefts from station 1, follow-through..." style="background:var(--bg2);color:var(--text);border:1px solid var(--border2);border-radius:var(--r);padding:12px;font-size:14px;font-family:inherit;width:100%;resize:vertical;margin-bottom:.75rem"></textarea>
@@ -959,8 +1018,6 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
           <button class="tag-btn" onclick="toggleTag(this)">Trigger pull</button>
         </div>
       </div>
-      </div><!-- /session right col -->
-      </div><!-- /dt-grid -->
       <button class="btn btn-primary" style="font-size:16px;padding:14px;width:100%;margin-top:.5rem" onclick="beginSession()">
         <i class="ti ti-player-play"></i> Begin session
       </button>
@@ -1196,13 +1253,17 @@ async function dbUpdate(table,id,updates){
 function switchView(name,btn){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('view-'+name).classList.add('active');
+  const viewEl=document.getElementById('view-'+name);
+  if(viewEl)viewEl.classList.add('active');
   if(btn)btn.classList.add('active');
-  else document.getElementById('nav-'+name).classList.add('active');
+  else{const nb=document.getElementById('nav-'+name);if(nb)nb.classList.add('active');}
   if(name==='dash')renderDash();
   if(name==='scorer')initScorerSetup();
   if(name==='field')initFieldSetup();
-  if(name==='club'){renderShootersList();renderMoreEvents();renderCharts();populateChartSelects();}
+  if(name==='club'){
+    document.getElementById('view-club').style.display='flex';
+    renderShootersList();renderMoreEvents();renderCharts();populateChartSelects();
+  }
   if(name==='profile')renderProfileView();
   if(name==='session')initSessionView();
   if(name==='more'){renderShootersList();renderMoreEvents();renderCharts();populateChartSelects();}
@@ -2373,6 +2434,8 @@ function onAuthReady(){
   const adminLabel=document.getElementById('admin-section-label');
   if(adminSec)adminSec.style.display=isAdmin?'block':'none';
   if(adminLabel)adminLabel.style.display=isAdmin?'block':'none';
+  const adminClub=document.getElementById('admin-club-section');
+  if(adminClub)adminClub.style.display=isAdmin?'block':'none';
   if(isAdmin)loadInviteList();
   // Desktop sidebar extras
   if(isDesktop()){
@@ -2577,6 +2640,7 @@ function segPick(btn,segId,hiddenId,value){
 
 function toggleTag(btn){
   btn.classList.toggle('active');
+  if(navigator.vibrate)navigator.vibrate(8);
 }
 
 function initSessionView(){
