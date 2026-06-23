@@ -335,6 +335,12 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
   }
   .dash-title{font-size:20px;font-weight:800}
 
+  /* Dashboard: the sidebar carries the brand and the injected action bar
+     carries Add round / Profile, so drop the in-header duplicates on desktop. */
+  #view-dash .dash-brand{display:none}
+  #view-dash #account-btn,
+  #view-dash #dash-round-btn{display:none !important}
+
   /* Global action bar (profile + add round) injected by JS */
   #desktop-action-bar{
     display:flex;
@@ -578,11 +584,11 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,1
 <!-- ══════════════ DASHBOARD VIEW ══════════════ -->
 <div class="view active" id="view-dash">
   <div class="dash-header">
-    <span class="dash-title"><span class="brand-tile"><svg class="brand-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M6 40q12-3 22-2" stroke="#fff" stroke-opacity=".3" stroke-width="2.6" stroke-linecap="round"/><path d="M9 47q12-3 21-2" stroke="#fff" stroke-opacity=".18" stroke-width="2.6" stroke-linecap="round"/><g transform="rotate(-16 34 30)"><path d="M11 32a22 9 0 0 0 44 0v3a22 9 0 0 1-44 0z" fill="#d2540a"/><ellipse cx="33" cy="32" rx="22" ry="9" fill="#fb6a1a"/><ellipse cx="33" cy="29.5" rx="16.5" ry="6.6" fill="#ff7d2e"/><ellipse cx="33" cy="29.5" rx="16.5" ry="6.6" fill="none" stroke="#d2540a" stroke-opacity=".55" stroke-width="1.2"/><ellipse cx="33" cy="27.4" rx="11" ry="4.4" fill="#ff8c45"/><ellipse cx="33" cy="27.4" rx="11" ry="4.4" fill="none" stroke="#d2540a" stroke-opacity=".5" stroke-width="1.1"/><ellipse cx="33" cy="25.8" rx="5.4" ry="2.3" fill="#ffa566"/><ellipse cx="28" cy="24.8" rx="3" ry="1" fill="#fff" fill-opacity=".5"/></g></svg></span>Trap Journal</span>
+    <span class="dash-title dash-brand"><span class="brand-tile"><svg class="brand-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M6 40q12-3 22-2" stroke="#fff" stroke-opacity=".3" stroke-width="2.6" stroke-linecap="round"/><path d="M9 47q12-3 21-2" stroke="#fff" stroke-opacity=".18" stroke-width="2.6" stroke-linecap="round"/><g transform="rotate(-16 34 30)"><path d="M11 32a22 9 0 0 0 44 0v3a22 9 0 0 1-44 0z" fill="#d2540a"/><ellipse cx="33" cy="32" rx="22" ry="9" fill="#fb6a1a"/><ellipse cx="33" cy="29.5" rx="16.5" ry="6.6" fill="#ff7d2e"/><ellipse cx="33" cy="29.5" rx="16.5" ry="6.6" fill="none" stroke="#d2540a" stroke-opacity=".55" stroke-width="1.2"/><ellipse cx="33" cy="27.4" rx="11" ry="4.4" fill="#ff8c45"/><ellipse cx="33" cy="27.4" rx="11" ry="4.4" fill="none" stroke="#d2540a" stroke-opacity=".5" stroke-width="1.1"/><ellipse cx="33" cy="25.8" rx="5.4" ry="2.3" fill="#ffa566"/><ellipse cx="28" cy="24.8" rx="3" ry="1" fill="#fff" fill-opacity=".5"/></g></svg></span>Trap Journal</span>
     <div class="row" style="gap:8px">
       <span id="sync-dot" style="font-size:12px;color:var(--text2)"></span>
       <button class="btn btn-secondary btn-sm" id="account-btn" onclick="switchView('profile',document.getElementById('nav-profile'))" style="display:none"><i class="ti ti-user-circle"></i> <span id="account-label"></span></button>
-      <button class="btn btn-secondary btn-sm" onclick="openModal('round')"><i class="ti ti-plus"></i> Round</button>
+      <button class="btn btn-secondary btn-sm" id="dash-round-btn" onclick="openModal('round')"><i class="ti ti-plus"></i> Round</button>
     </div>
   </div>
 
