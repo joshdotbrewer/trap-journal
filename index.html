@@ -1415,7 +1415,7 @@ async function saveEvent(){
   const date=document.getElementById('em-date')?.value;
   if(!name||!date){alert('Name and date required.');return;}
   const tid=document.getElementById('em-tour')?.value||null;
-  try{await dbInsertEvent({name,date,format:document.getElementById('em-fmt')?.value,notes:document.getElementById('em-notes')?.value.trim(),tournament_id:tid,tournamentId:tid});}
+  try{await dbInsertEvent({name,date,format:document.getElementById('em-fmt')?.value,notes:document.getElementById('em-notes')?.value.trim(),tournament_id:tid});}
   catch(e){alert('Failed: '+e.message);return;}
   closeModal();populateEventSelects();renderMoreEvents();renderDash();toast('Event created');
 }
@@ -1435,7 +1435,7 @@ async function saveTournament(){
   const name=document.getElementById('tm-name')?.value.trim();
   const start=document.getElementById('tm-start')?.value;
   if(!name||!start){alert('Name and start date required.');return;}
-  try{await dbInsertTournament({name,start_date:start,start,end_date:document.getElementById('tm-end')?.value,end:document.getElementById('tm-end')?.value,location:document.getElementById('tm-loc')?.value.trim(),notes:document.getElementById('tm-notes')?.value.trim()});}
+  try{await dbInsertTournament({name,start_date:start,end_date:document.getElementById('tm-end')?.value||null,location:document.getElementById('tm-loc')?.value.trim(),notes:document.getElementById('tm-notes')?.value.trim()});}
   catch(e){alert('Failed: '+e.message);return;}
   closeModal();renderMoreEvents();toast('Tournament created');
 }
