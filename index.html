@@ -2215,7 +2215,7 @@ async function sendMagicLink(){
   const {data:inv}=await db.from('invites').select('id').eq('email',email).is('claimed_at',null).maybeSingle();
   const isAdmin=email===ADMIN_EMAIL;
   if(!inv&&!isAdmin){toast('No invite found for that email. Ask your club admin.');return;}
-  const {error}=await db.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});
+  const {error}=await db.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.href.split('#')[0]}});
   if(error){toast('Error: '+error.message);return;}
   document.getElementById('auth-magic-sent').style.display='block';
 }
@@ -2239,7 +2239,7 @@ async function signUpPassword(){
   const {data:inv}=await db.from('invites').select('id').eq('email',email).is('claimed_at',null).maybeSingle();
   const isAdmin=email===ADMIN_EMAIL;
   if(!inv&&!isAdmin){errEl.textContent='No invite found for that email. Ask your club admin.';errEl.style.display='block';return;}
-  const {error}=await db.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin}});
+  const {error}=await db.auth.signUp({email,password,options:{emailRedirectTo:window.location.href.split('#')[0]}});
   if(error){errEl.textContent=error.message;errEl.style.display='block';}
   else{errEl.style.cssText='display:block;background:var(--green-bg);color:var(--green-text);border-radius:var(--r);padding:.75rem';errEl.textContent='Account created! Check your email to confirm, then sign in.';}
 }
